@@ -1,0 +1,604 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Liquid Star JSUA scripting docs — simple API notes, examples, and an AI-ready reference pack.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/webp" href="../assets/images/liquid-star-logo.webp">
+  <title>JSUA Docs | Liquid Star</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="stylesheet" href="../assets/css/dark.css">
+  <script src="../assets/js/site.js" defer></script>
+  <style>
+    .docs-page { --docs-max:1180px; --gold-rgb:216,181,109; --mono:'JetBrains Mono','IBM Plex Mono',monospace; }
+    .docs-wrap { width:min(var(--docs-max), calc(100% - 36px)); margin:0 auto; }
+    .docs-page code { font-family:'JetBrains Mono','IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:7px; background:rgba(255,255,255,.045); color:var(--ink); padding:1px 6px; }
+    .docs-hero { position:relative; min-height:calc(100vh - 96px); display:grid; align-items:center; padding:66px 0 64px; overflow:hidden; }
+    .docs-hero::before { content:""; position:absolute; inset:6% -12% auto auto; width:660px; height:470px; border-radius:999px; background:radial-gradient(circle, rgba(var(--gold-rgb),.18), rgba(var(--gold-rgb),.045) 44%, transparent 74%); filter:blur(10px); pointer-events:none; }
+    .docs-hero-grid { position:relative; display:grid; grid-template-columns:minmax(0,.92fr) minmax(430px,1.08fr); gap:50px; align-items:center; }
+    .docs-kicker { margin:0 0 16px; color:var(--gold); font-family:'JetBrains Mono','IBM Plex Mono',monospace; font-size:10px; letter-spacing:.17em; text-transform:uppercase; }
+    .docs-title { margin:0; max-width:620px; color:var(--ink); font-size:clamp(51px,6.2vw,85px); line-height:.92; letter-spacing:-.052em; font-weight:650; }
+    .docs-title > span:not([class]) { background:linear-gradient(125deg, #f5e0a4 0%, #d8b56d 40%, #b87c28 76%, #e8ca80 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .docs-title .typing-headline { position:relative; display:inline-block; min-width:7.15em; padding-right:.12em; color:var(--ink); white-space:nowrap; }
+    .docs-title .typing-headline-text { display:inline-block; color:var(--ink); }
+    .docs-title .typing-headline::after { content:""; position:absolute; left:var(--cursor-x, 0px); top:.08em; width:.055em; height:.86em; border-radius:99px; background:var(--gold); box-shadow:0 0 18px rgba(var(--gold-rgb),.22); transform:translateX(.08em); transition:left 145ms cubic-bezier(.22,1,.36,1), opacity 260ms ease; animation:cursorBlink 1.35s ease-in-out infinite; will-change:left, opacity; }
+    .docs-lead { max-width:550px; margin:20px 0 0; color:var(--ink-soft); font-size:clamp(15px,1.12vw,17px); line-height:1.72; letter-spacing:-.01em; }
+    .docs-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+    .docs-mini-note { margin-top:15px; color:var(--ink-faint); font-family:'JetBrains Mono','IBM Plex Mono',monospace; font-size:11px; line-height:1.7; }
+
+    .code-stage { position:relative; min-height:0; display:flex; flex-direction:column; gap:16px; padding:26px; border:1px solid rgba(255,255,255,.1); border-radius:30px; background:linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.018) 58%, rgba(var(--gold-rgb),.045)); box-shadow:0 26px 100px rgba(0,0,0,.24); overflow:hidden; backdrop-filter:blur(20px); }
+    .code-stage::before { content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px); background-size:36px 36px; mask-image:radial-gradient(circle at 64% 34%, #000 0, transparent 72%); opacity:.55; pointer-events:none; }
+    .code-window { position:relative; z-index:1; border:1px solid rgba(255,255,255,.11); border-radius:22px; background:rgba(4,4,4,.58); overflow:hidden; box-shadow:0 24px 70px rgba(0,0,0,.28); }
+    .code-bar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.035); }
+    .code-dots { display:flex; gap:7px; }
+    .code-dots i { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.18); }
+    .code-path { color:var(--ink-faint); font-family:'JetBrains Mono','IBM Plex Mono',monospace; font-size:10px; }
+    .code-window pre { margin:0; max-height:390px; padding:20px 22px 24px; overflow:auto; }
+    .code-window code { display:block; padding:0; border:0; background:none; color:rgba(255,255,255,.82); font-size:12.8px; line-height:1.8; white-space:pre-wrap; }
+    .code-window .line { display:block; opacity:0; transform:translateY(4px); animation:typeLine .42s ease forwards; animation-delay:calc(var(--i) * 90ms); }
+    @keyframes typeLine { to { opacity:1; transform:none; } }
+    .code-window .gold { color:#e3c474; } .code-window .muted { color:rgba(255,255,255,.38); } .code-window .blue { color:#87bfff; }
+    .typing-cursor { display:inline-block; width:7px; height:1.1em; margin-left:4px; vertical-align:-.18em; border-radius:2px; background:var(--gold); animation:cursorBlink 1.35s ease-in-out infinite; }
+    @keyframes cursorBlink { 0%,100% { opacity:1; } 45%,55% { opacity:.2; } }
+    .code-pills { position:relative; z-index:1; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .code-pill { display:flex; align-items:flex-start; gap:11px; min-height:0; padding:14px; border:1px solid rgba(255,255,255,.09); border-radius:16px; background:rgba(0,0,0,.2); opacity:0; transform:translateY(10px); animation:pillIn .52s var(--ease) forwards; }
+    .code-pill:nth-child(1) { animation-delay:.55s; } .code-pill:nth-child(2) { animation-delay:.64s; } .code-pill:nth-child(3) { animation-delay:.73s; } .code-pill:nth-child(4) { animation-delay:.82s; }
+    @keyframes pillIn { to { opacity:1; transform:none; } }
+    .code-icon { width:28px; height:28px; display:grid; place-items:center; flex:0 0 auto; border-radius:999px; background:rgba(var(--gold-rgb),.12); color:var(--gold); font-family:'JetBrains Mono','IBM Plex Mono',monospace; font-size:11px; line-height:1; }
+    .code-pill strong { display:block; color:var(--ink); font-size:13px; letter-spacing:-.01em; }
+    .code-pill span { display:block; margin-top:3px; color:var(--ink-faint); font-size:11.5px; line-height:1.35; }
+
+    /* ── Reader: the dial + scientific papers ───────────── */
+    .reader { position:relative; padding:84px 0 124px; scroll-margin-top:140px; }
+    .reader-stage { display:flex; flex-direction:column; align-items:center; text-align:center; }
+    .reader-eyebrow { margin:0 0 16px; color:var(--gold); font-family:var(--mono); font-size:10px; letter-spacing:.24em; text-transform:uppercase; }
+    .reader-title { margin:0; min-height:1.05em; color:var(--ink); font-size:clamp(44px,5.9vw,81px); line-height:1; letter-spacing:-.052em; font-weight:800; transition:opacity .3s ease, transform .3s ease; }
+    .reader-title.swap { opacity:0; transform:translateY(10px); }
+    .reader-title em { font-style:normal; background:linear-gradient(125deg,#f5e0a4 0%,#d8b56d 42%,#b87c28 78%,#e8ca80 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .reader-hint { margin:16px 0 0; min-height:1.3em; color:var(--ink-faint); font-family:var(--mono); font-size:11px; letter-spacing:.05em; transition:opacity .3s ease; }
+
+    /* dial — the centerpiece */
+    .wheel-wrap { display:flex; justify-content:center; margin:36px 0 0; transition:transform .6s cubic-bezier(.5,0,.2,1), margin .6s cubic-bezier(.5,0,.2,1); transform-origin:center center; will-change:transform; }
+    .reader.open .wheel-wrap { transform:scale(.44); margin:-118px 0 -158px; }
+    .wheel { width:min(540px,90vw); height:auto; display:block; overflow:visible; cursor:pointer; outline:none; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
+    .reader-stage { -webkit-user-select:none; user-select:none; }
+    .wheel-halo { fill:none; stroke:rgba(var(--gold-rgb),0); stroke-width:2.5; transition:stroke .4s ease; }
+    .wheel.is-hot .wheel-halo, .reader.open .wheel-halo { stroke:rgba(var(--gold-rgb),.2); }
+    .wheel-spoke { cursor:pointer; outline:none; }
+    .wheel-spoke:focus { outline:none; }
+    .wheel-spoke:focus-visible .wheel-seg { stroke:rgba(var(--gold-rgb),.85); stroke-width:2.5; }
+    .wheel-seg { fill:rgba(255,255,255,.02); stroke:rgba(255,255,255,.1); stroke-width:2; transition:fill .25s ease, stroke .25s ease; }
+    .reader:not(.open) .wheel-spoke:hover .wheel-seg { fill:rgba(var(--gold-rgb),.16); stroke:rgba(var(--gold-rgb),.5); }
+    .wheel-spoke.pulse .wheel-seg { animation:segPulse .55s ease; }
+    @keyframes segPulse { 0% { fill:rgba(var(--gold-rgb),.55); } 100% { fill:rgba(var(--gold-rgb),.16); } }
+    .wheel-dot { fill:rgba(255,255,255,.25); pointer-events:none; transition:fill .25s ease; }
+    .reader:not(.open) .wheel-spoke:hover .wheel-dot { fill:var(--gold); }
+    .wheel-mark { font-family:var(--mono); font-size:21px; font-weight:800; fill:rgba(255,255,255,.5); pointer-events:none; transition:fill .25s ease; }
+    .reader:not(.open) .wheel-spoke:hover .wheel-mark { fill:var(--gold); }
+    .wheel-core { fill:rgba(6,6,5,.92); stroke:rgba(255,255,255,.12); stroke-width:2; transition:stroke .28s ease; }
+    .reader.open .wheel-core { cursor:pointer; }
+    .wheel.is-hot .wheel-core, .reader.open .wheel-core { stroke:rgba(var(--gold-rgb),.55); }
+    .wheel-core-text { font-family:var(--mono); font-size:17px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; fill:var(--ink-faint); pointer-events:none; transition:fill .26s ease; }
+    .wheel-core-text.back { fill:var(--gold); letter-spacing:.14em; }
+
+    /* papers — rise from below */
+    /* papers — read as part of the page, not a floating card */
+    .paper-stack { display:grid; grid-template-rows:0fr; opacity:0; width:100%; margin:0 auto; transition:grid-template-rows .65s cubic-bezier(.5,0,.2,1), opacity .5s ease; }
+    .reader.open .paper-stack { grid-template-rows:1fr; opacity:1; }
+    .paper-clip { overflow:hidden; min-height:0; transform:translateY(26px); transition:transform .65s cubic-bezier(.5,0,.2,1); }
+    .reader.open .paper-clip { transform:none; }
+    .paper { display:none; }
+    .paper.active { display:block; }
+    .paper-card { border:0; border-radius:0; background:none; box-shadow:none; overflow:visible; }
+    /* article header — a hairline ties it to the dial above */
+    .paper-head { position:relative; max-width:780px; margin:0 auto; padding:46px 0 30px; border-top:1px solid var(--line); text-align:left; }
+    .paper-kicker { margin:0 0 10px; color:var(--gold); font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; }
+    .paper-head h3 { margin:0; color:var(--ink); font-size:clamp(28px,3.2vw,40px); line-height:1.02; letter-spacing:-.038em; font-weight:700; }
+    .paper-abstract { margin:16px 0 0; max-width:62ch; color:var(--ink-soft); font-size:16px; line-height:1.72; }
+    .paper-abstract b { color:var(--gold); font-weight:600; letter-spacing:.02em; }
+    /* article body — a real reading column */
+    .paper-body { max-width:720px; margin:0 auto; padding:6px 0 18px; text-align:left; }
+    .paper-sec { padding:34px 0; border-top:1px solid rgba(255,255,255,.07); }
+    .paper-sec h4 { margin:0 0 16px; display:flex; align-items:baseline; gap:14px; color:var(--ink); font-size:21px; letter-spacing:-.022em; font-weight:650; }
+    .sec-no { flex:0 0 auto; color:var(--gold); font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.04em; }
+    .paper-sec p { margin:0 0 16px; color:var(--ink-soft); font-size:16px; line-height:1.85; }
+    .paper-sec p:last-child { margin-bottom:0; }
+    .paper-sec strong { color:var(--ink); font-weight:600; }
+    .paper-sec em { color:var(--ink); font-style:italic; }
+    .paper-sec code { font-family:var(--mono); font-size:14px; color:var(--ink); }
+    /* the one extra element articles use: a plain code block */
+    .listing { margin:22px 0 6px; border:1px solid rgba(255,255,255,.09); border-radius:14px; overflow:hidden; background:rgba(4,4,4,.5); }
+    .listing figcaption { padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.07); color:var(--ink-faint); font-family:var(--mono); font-size:11px; letter-spacing:.06em; }
+    .listing pre { margin:0; padding:18px 20px; overflow:auto; }
+    .listing code { display:block; padding:0; border:0; background:none; color:rgba(255,255,255,.84); font-family:var(--mono); font-size:13px; line-height:1.85; white-space:pre; }
+    .listing .gold { color:#e4c36d; } .listing .blue { color:#88c2ff; } .listing .muted { color:rgba(255,255,255,.36); }
+    /* command reference table */
+    .cmd-group { margin:24px 0 6px; }
+    .cmd-group > h5 { margin:0 0 10px; color:var(--ink); font-size:13px; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; }
+    .cmd-table { width:100%; border-collapse:collapse; border:1px solid rgba(255,255,255,.09); border-radius:12px; overflow:hidden; }
+    .cmd-table tr { border-bottom:1px solid rgba(255,255,255,.06); }
+    .cmd-table tr:last-child { border-bottom:0; }
+    .cmd-table tr:nth-child(even) { background:rgba(255,255,255,.018); }
+    .cmd-table td { padding:11px 14px; vertical-align:top; font-size:14px; line-height:1.6; }
+    .cmd-table td:first-child { width:42%; white-space:nowrap; color:#e4c36d; font-family:var(--mono); font-size:13px; }
+    .cmd-table td:last-child { color:var(--ink-soft); }
+    @media (max-width:620px) { .cmd-table td:first-child { white-space:normal; width:44%; } .cmd-table td { font-size:13px; padding:9px 10px; } }
+    .reader-foot { max-width:720px; margin:48px auto 0; display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between; padding:0; border:0; border-top:1px solid var(--line); padding-top:26px; background:none; }
+    .reader-foot p { margin:0; max-width:46ch; color:var(--ink-soft); font-size:14px; line-height:1.65; }
+    .reader-foot code { font-family:var(--mono); font-size:12px; }
+    .copied { color:var(--green) !important; }
+    @media (max-width:1060px) { .docs-hero-grid { grid-template-columns:1fr; } .docs-hero { min-height:auto; padding-top:70px; } }
+    @media (max-width:760px) { .docs-wrap { width:min(var(--docs-max), calc(100% - 24px)); } .docs-title { font-size:clamp(41px,13vw,58px); } .docs-lead { font-size:15px; } .code-stage { padding:14px; border-radius:24px; } .code-window pre { max-height:360px; padding:16px; } .code-pills { grid-template-columns:1fr; } .docs-actions .button { width:100%; justify-content:center; } .paper-head { flex-direction:column; align-items:flex-start; gap:16px; padding:32px 0 26px; } .paper-sec p, .paper-sec ul li, .paper-abstract { font-size:15px; } .reader-foot { flex-direction:column; align-items:flex-start; } }
+  </style>
+</head>
+<body class="dark docs-page">
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"/></symbol>
+    <symbol id="download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></symbol>
+    <symbol id="bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="4"/><path d="M12 3v4M8 12h.01M16 12h.01M8 16h8"/></symbol>
+    <symbol id="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
+    <symbol id="zip" viewBox="0 0 24 24"><path d="M4 4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 2v6h6M11 7h2M11 10h2M11 13h2"/></symbol>
+  </svg>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header" data-header><div class="nav-shell"><a class="brand" href="/" aria-label="Liquid Star home"><span class="brand-mark" aria-hidden="true"><i></i></span><span>Liquid Star</span></a><nav class="primary-nav" aria-label="Primary navigation"><a href="/features">Features</a><a href="/download">Download</a><a href="/docs" aria-current="page">Docs</a><a href="/support">Support</a></nav><div class="nav-actions"><a class="nav-text-link" href="https://discord.gg/H6282ZmGGk" target="_blank" rel="noreferrer">Discord</a></div></div></header>
+  <main id="content">
+    <section class="docs-hero"><div class="docs-wrap docs-hero-grid"><div class="page-enter page-enter-1"><p class="docs-kicker">JSUA / developer notes</p><h1 class="docs-title"><span class="typing-headline" id="typing-headline"><span class="typing-headline-text" id="typing-headline-text">Code anything.</span></span> Use <span>JSUA.</span></h1><p class="docs-lead">We recommend using AI to help you code it, since it’ll usually be faster and more effective. But if you’re set on writing your own JSUA manually, the docs are below, plus one clean AI reference text file.</p><div class="docs-actions"><a class="button button-primary" href="AI%20Reference.txt" download>AI Reference.txt <svg class="icon" aria-hidden="true"><use href="#download"></use></svg></a></div><p class="docs-mini-note">Scripts should be in the <code>Liquid Star/ jsua /</code> foleder created.</p></div><div class="code-stage page-enter page-enter-2" aria-label="JSUA code preview"><div class="code-window"><div class="code-bar"><span class="code-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="code-path">jsua / quick-control.js</span></div><pre><code id="hero-code"><span class="line" style="--i:1"><span class="gold">jsua.register</span>({ name: <span class="blue">"Quick Control"</span> }, function init() {</span>
+<span class="line" style="--i:2">  <span class="muted">// one control, one action, one cleanup</span></span>
+<span class="line" style="--i:3">  kit.menuFeature(<span class="blue">"Visuals"</span>, <span class="blue">"Weapon Chams"</span>);</span>
+<span class="line" style="--i:4">  jsua.menu.button(<span class="blue">"Look at enemy"</span>, function () {</span>
+<span class="line" style="--i:5">    const enemy = players.closestEnemy();</span>
+<span class="line" style="--i:6">    if (enemy) self.lookAt(enemy);</span>
+<span class="line" style="--i:7">  });</span>
+<span class="line" style="--i:8">}, function cleanup() {</span>
+<span class="line" style="--i:9">  kit.off([<span class="blue">"Weapon Chams"</span>]);</span>
+<span class="line" style="--i:10">});<span class="typing-cursor"></span></span></code></pre></div></div></div></section>
+    <section class="reader" id="reader" data-reveal><div class="docs-wrap">
+      <div class="reader-stage">
+        <p class="reader-eyebrow">JSUA / field manual</p>
+        <h2 class="reader-title" id="reader-title">Read <em>here.</em></h2>
+        <div class="wheel-wrap"><svg class="wheel" id="wheel" viewBox="-180 -180 360 360" xmlns="http://www.w3.org/2000/svg" role="navigation" aria-label="JSUA article dial">
+          <circle class="wheel-halo" cx="0" cy="0" r="166"/>
+          <g class="wheel-spoke" data-tab="start" role="button" tabindex="0" aria-label="Open Start — introduction"><path class="wheel-seg" d="M -75 -129.9 A 150 150 0 0 1 75 -129.9 L 35 -60.62 A 70 70 0 0 0 -35 -60.62 Z"/><text class="wheel-mark" x="0" y="-110" text-anchor="middle" dominant-baseline="central">S</text></g>
+          <g class="wheel-spoke" data-tab="scripts" role="button" tabindex="0" aria-label="Open Anatomy of a Script"><path class="wheel-seg" d="M 75 -129.9 A 150 150 0 0 1 150 0 L 70 0 A 70 70 0 0 0 35 -60.62 Z"/><circle class="wheel-dot" cx="95.26" cy="-55" r="4.2"/></g>
+          <g class="wheel-spoke" data-tab="state" role="button" tabindex="0" aria-label="Open Reading the Match"><path class="wheel-seg" d="M 150 0 A 150 150 0 0 1 75 129.9 L 35 60.62 A 70 70 0 0 0 70 0 Z"/><circle class="wheel-dot" cx="95.26" cy="55" r="4.2"/></g>
+          <g class="wheel-spoke" data-tab="build" role="button" tabindex="0" aria-label="Open Interacting with the Client"><path class="wheel-seg" d="M 75 129.9 A 150 150 0 0 1 -75 129.9 L -35 60.62 A 70 70 0 0 0 35 60.62 Z"/><circle class="wheel-dot" cx="0" cy="110" r="4.2"/></g>
+          <g class="wheel-spoke" data-tab="rules" role="button" tabindex="0" aria-label="Open The Sandbox"><path class="wheel-seg" d="M -75 129.9 A 150 150 0 0 1 -150 0 L -70 0 A 70 70 0 0 0 -35 60.62 Z"/><circle class="wheel-dot" cx="-95.26" cy="55" r="4.2"/></g>
+          <g class="wheel-spoke" data-tab="bots" role="button" tabindex="0" aria-label="Open Bots"><path class="wheel-seg" d="M -150 0 A 150 150 0 0 1 -75 -129.9 L -35 -60.62 A 70 70 0 0 0 -70 0 Z"/><circle class="wheel-dot" cx="-95.26" cy="-55" r="4.2"/></g>
+          <circle class="wheel-core" cx="0" cy="0" r="70"/>
+          <text class="wheel-core-text" id="wheel-core-text" x="0" y="0" text-anchor="middle" dominant-baseline="central"></text>
+        </svg></div>
+        <p class="reader-hint" id="reader-hint">Tap a wedge to open its article</p>
+      </div>
+
+      <div class="paper-stack" id="paper-stack"><div class="paper-clip" id="paper-clip">
+        <article class="paper" data-article="start"><div class="paper-card">
+          <div class="paper-head">
+            <div><p class="paper-kicker">Start · Introduction</p><h3>Welcome to JSUA</h3><p class="paper-abstract">JSUA is the part of Liquid Star where you add your own ideas to the client. This page is the gentle start — what it is, where scripts go, and how to get one running. No coding knowledge needed here; the deeper wedges handle that.</p></div>
+          </div>
+          <div class="paper-body">
+            <div class="paper-sec"><h4><span class="sec-no">§1</span> What JSUA Is</h4><p>JSUA stands for <strong>JavaScript User Application</strong>. In plain terms it is a small script — a short list of instructions — that the client runs for you. People use scripts to add little quality-of-life tweaks, to automate a small action, or to tie a few existing features to a single button.</p><p>You do not need to be a programmer to use one. You only need the script file itself, and a place to put it.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§2</span> Where Scripts Live</h4><p>Every JSUA is a plain text file that ends in <code>.js</code>. They sit in a folder named <code>jsua</code>, created next to the client. The loop is short: drop a script file into that folder, open the JSUA tab inside Liquid Star, and your script appears in the list. Tick it on to enable it, tick it off to disable it.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§3</span> You Don't Have to Code</h4><p>This is the important part. If you can't write code, you don't have to. The fastest path is to let an AI write the script for you. Hand it the <strong>AI Reference</strong> file linked at the top of this page, describe what you want in normal words — like "warn me when my ammo is low" — and paste the result back into a file. The reference tells the AI exactly what it is allowed to use, so the script stays valid.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§4</span> How to Read the Rest</h4><p>The dial above is your table of contents. Each wedge opens one short article. This Start wedge is just the welcome; the others go deeper — <strong>Anatomy of a Script</strong> shows how to build one and add buttons, <strong>Reading the Match</strong> lists every command you can use, <strong>Interacting with the Client</strong> shows how to flip features and test as you go, <strong>The Sandbox</strong> explains the safety rules, and <strong>Deploying Bots</strong> connects extra players you control. Read them in order, or jump straight to the one you need.</p></div>
+          </div>
+        </div></article>
+
+        <article class="paper" data-article="scripts"><div class="paper-card">
+          <div class="paper-head">
+            <div><p class="paper-kicker">Scripts · Foundations</p><h3>Anatomy of a Script</h3><p class="paper-abstract">Different scripts do wildly different things, yet under the hood they all share the same simple shape. Learn that shape once and the rest is just filling in the blanks.</p></div>
+          </div>
+          <div class="paper-body">
+            <div class="paper-sec"><h4><span class="sec-no">§1</span> The Register Wrapper</h4><p>A script comes to life the moment you call <code>jsua.register(meta, init, cleanup)</code>. It always takes the same three things in the same order. <strong>meta</strong> is a small label — at the very least a <code>name</code>. <strong>init</strong> is a function that sets things up when the script is switched on. <strong>cleanup</strong> is a function that puts everything back when it is switched off.</p><figure class="listing"><figcaption>The smallest script that actually works</figcaption><pre><code><span class="gold">jsua.register</span>({ name: <span class="blue">"Hello"</span> }, function init() {
+  jsua.notify(<span class="blue">"Script on"</span>, <span class="blue">"success"</span>);
+}, function cleanup() {
+  jsua.notify(<span class="blue">"Script off"</span>, <span class="blue">"info"</span>);
+});</code></pre></figure><p>The client runs <code>init</code> once when you tick the script on, and <code>cleanup</code> once when you tick it off. Between those moments nothing of yours runs unless you asked for it — so a tidy script leaves no trace once it is off.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§2</span> Adding Controls — Checkboxes, Sliders, Buttons</h4><p>This is where most scripts get useful. Inside <code>init</code> you can build a small panel that appears under your script in the JSUA tab. There are four building blocks, and you create them right away (not inside a timer):</p><figure class="listing"><figcaption>A panel with a heading, a checkbox, a slider, and a button</figcaption><pre><code><span class="gold">jsua.register</span>({ name: <span class="blue">"My Panel"</span> }, function init() {
+  jsua.menu.label(<span class="blue">"My Settings"</span>);                 <span class="muted">// a small heading</span>
+  jsua.menu.checkbox(<span class="blue">"Enabled"</span>, true, function (on) {
+    jsua.notify(on ? <span class="blue">"On"</span> : <span class="blue">"Off"</span>, <span class="blue">"info"</span>);
+  });
+  const speed = jsua.menu.slider(<span class="blue">"Speed"</span>, 0, 10, 0.5, 3, function (v) {
+    jsua.log(<span class="blue">"Speed"</span>, v);                         <span class="muted">// fires as you drag</span>
+  });
+  jsua.menu.button(<span class="blue">"Reset speed"</span>, function () {
+    speed.setValue(3);                            <span class="muted">// controls give you a handle back</span>
+  });
+}, function cleanup() {});</code></pre></figure><p>Every control returns a small handle with <code>getValue()</code> and <code>setValue()</code>, so you can read or change it later. And you never tidy them up by hand — all menu controls vanish automatically when the script is disabled.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§3</span> Talking to the Player</h4><p>Two helpers let a script speak. <code>jsua.notify(message, type)</code> shows a small toast, where <code>type</code> is <code>"success"</code>, <code>"info"</code>, <code>"warning"</code>, or <code>"error"</code>. <code>jsua.log(name, value)</code> writes a line into the JSUA Console — the place you check what a value really is while you are testing.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§4</span> Repeating Actions Safely</h4><p>Most scripts repeat something. Rather than reaching for a raw <code>setInterval</code>, use <code>kit.every(ms, fn)</code> to repeat an action and <code>kit.after(ms, fn)</code> to run one once after a delay. The reason matters: these stop on their own when the script is disabled. Timers, listeners, and menu controls are all cleaned up for you — the only thing you undo by hand is a client feature you switched on.</p></div>
+          </div>
+        </div></article>
+
+        <article class="paper" data-article="state"><div class="paper-card">
+          <div class="paper-head">
+            <div><p class="paper-kicker">State · Reference</p><h3>Reading the Match</h3><p class="paper-abstract">This is your lookup table. Every command JSUA gives you to read the game or act in it is listed below, grouped by what it touches, with a plain note on what each one does. Skim it once and you will know what is possible.</p></div>
+          </div>
+          <div class="paper-body">
+            <div class="paper-sec"><h4><span class="sec-no">§1</span> You — the <code>self</code> object</h4><p><code>self</code> is your own player. Some of these <em>read</em> a value; the bottom three <em>do</em> something.</p>
+              <div class="cmd-group"><table class="cmd-table"><tbody>
+                <tr><td>self.pos</td><td>Your position right now, as <code>{x, y, z}</code>.</td></tr>
+                <tr><td>self.yaw</td><td>Which way you face left/right, in radians.</td></tr>
+                <tr><td>self.pitch</td><td>Which way you face up/down, in radians.</td></tr>
+                <tr><td>self.health</td><td>Your current health.</td></tr>
+                <tr><td>self.team</td><td>Your team number (used to tell friend from foe).</td></tr>
+                <tr><td>self.press(key)</td><td>Hold a key down — name like <code>"d"</code>, <code>"space"</code>, <code>"ctrl"</code>, or a code like <code>68</code>.</td></tr>
+                <tr><td>self.unpress(key)</td><td>Release a key you pressed. Always pair it with a press.</td></tr>
+                <tr><td>self.lookAt(target)</td><td>Turn your view toward a player, a point, or an attached object.</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="paper-sec"><h4><span class="sec-no">§2</span> Everyone else — the <code>players</code> object</h4><p>Always the live list of other players. The filters save you from sorting by hand; the <code>closest…</code> calls hand back a single player.</p>
+              <div class="cmd-group"><table class="cmd-table"><tbody>
+                <tr><td>players.all</td><td>Everyone in the match except you.</td></tr>
+                <tr><td>players.enemy</td><td>Only players on other teams.</td></tr>
+                <tr><td>players.friendly</td><td>Only your teammates.</td></tr>
+                <tr><td>players.closest()</td><td>The nearest player to you of any team.</td></tr>
+                <tr><td>players.closestEnemy()</td><td>The nearest enemy. The one you usually want.</td></tr>
+                <tr><td>players.closestFriendly()</td><td>The nearest teammate.</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="paper-sec"><h4><span class="sec-no">§3</span> Your weapon &amp; aim — <code>weapon</code> and <code>calc</code></h4><p>JSUA gives the game's renamed fields steady names here, plus a few numbers it works out for you.</p>
+              <div class="cmd-group"><table class="cmd-table"><tbody>
+                <tr><td>weapon.ammo</td><td>Rounds left in the current weapon.</td></tr>
+                <tr><td>weapon.reloading</td><td><code>true</code> while you are reloading.</td></tr>
+                <tr><td>weapon.shotDelay</td><td>The gap between shots for this weapon.</td></tr>
+                <tr><td>calc.lookDir</td><td>The direction you are looking, as a unit <code>{x, y, z}</code>.</td></tr>
+                <tr><td>calc.lookYaw / calc.lookPitch</td><td>Your current aim angles, ready to use.</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="paper-sec"><h4><span class="sec-no">§4</span> Helpers — <code>kit</code></h4><p>Small tools that make the rest easier. <code>kit.ready()</code> is the one you will use most — it tells you the match actually exists yet.</p>
+              <div class="cmd-group"><table class="cmd-table"><tbody>
+                <tr><td>kit.ready()</td><td><code>true</code> once you have spawned and the player exists. Guard match logic with it.</td></tr>
+                <tr><td>kit.pos(target)</td><td>Pulls a clean <code>{x, y, z}</code> out of a player or point.</td></tr>
+                <tr><td>kit.distance(a, b)</td><td>How far apart two players or points are.</td></tr>
+                <tr><td>kit.every(ms, fn)</td><td>Run <code>fn</code> over and over; stops itself on disable.</td></tr>
+                <tr><td>kit.after(ms, fn)</td><td>Run <code>fn</code> once after a delay.</td></tr>
+                <tr><td>kit.key(key, down, up)</td><td>Bind a hotkey; it unbinds itself on cleanup.</td></tr>
+                <tr><td>kit.clamp(v, min, max)</td><td>Keep a number inside a range.</td></tr>
+                <tr><td>kit.lerp(a, b, t)</td><td>Blend smoothly between two numbers.</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="paper-sec"><h4><span class="sec-no">§5</span> Putting it together</h4><p>Reading and acting in one small loop. Notice the <code>kit.ready()</code> guard — before you spawn, the values above are empty, so this keeps the script quiet until the match starts.</p><figure class="listing"><figcaption>Face the nearest enemy, ten times a second</figcaption><pre><code><span class="gold">kit.every</span>(100, function () {
+  if (!kit.ready()) return;
+  const enemy = players.closestEnemy();
+  if (enemy) self.lookAt(enemy);
+});</code></pre></figure></div>
+          </div>
+        </div></article>
+
+        <article class="paper" data-article="build"><div class="paper-card">
+          <div class="paper-head">
+            <div><p class="paper-kicker">Interact · Control</p><h3>Interacting with the Client</h3><p class="paper-abstract">Interacting means flipping the client's own switches from a script — the same toggles and sliders you see in the menu. The trick to learning it is not memorising names; it is printing what's there once, then writing from what you saw.</p></div>
+          </div>
+          <div class="paper-body">
+            <div class="paper-sec"><h4><span class="sec-no">§1</span> What You Can Interact With</h4><p>Every feature in the client carries a text <strong>label</strong> — exactly the words you read in the menu, like <code>"Weapon Chams"</code> or <code>"Third Person"</code>. The <code>feat</code> object is your remote control for them. There are only three verbs to learn: read one, set one, or list them all.</p>
+              <div class="cmd-group"><table class="cmd-table"><tbody>
+                <tr><td>feat.list()</td><td>Show every feature you can touch right now, with its label and value.</td></tr>
+                <tr><td>feat.get(label)</td><td>Read what one feature is currently set to.</td></tr>
+                <tr><td>feat.set(label, value)</td><td>Turn a feature on with <code>true</code> / off with <code>false</code> (or set a number).</td></tr>
+              </tbody></table></div>
+              <p>One rule is built in: <code>feat</code> always obeys your account tier. Features above your tier never appear, so a script can never reach past what your account is allowed.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§2</span> Pull It Once, Then You Know</h4><p>You should never guess a label. Instead, run <strong>one</strong> debug print and read the answer — after that, you know every name the rest of your script needs. Drop a temporary button into your panel, enable the script, click it, and look at the JSUA Console.</p><figure class="listing"><figcaption>The one debug that teaches you everything</figcaption><pre><code><span class="gold">jsua.register</span>({ name: <span class="blue">"Peek"</span> }, function init() {
+  jsua.menu.button(<span class="blue">"Show features"</span>, function () {
+    <span class="muted">// prints every label + value into the console</span>
+    jsua.log(<span class="blue">"features"</span>, feat.list());
+  });
+}, function cleanup() {});</code></pre></figure><p>The console now lists the real labels. Copy the one you want, and you are ready to control it for real.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§3</span> Now Make It Do Something</h4><p>With the label in hand, controlling it is one line. Here a hotkey toggles Weapon Chams on and off, and the script cleans up after itself — the golden rule from <em>The Sandbox</em>: turn off what you turned on.</p><figure class="listing"><figcaption>Toggle a feature with a key, then tidy up</figcaption><pre><code><span class="gold">jsua.register</span>({ name: <span class="blue">"Cham Toggle"</span> }, function init() {
+  kit.key(<span class="blue">"v"</span>, function () {
+    const on = feat.get(<span class="blue">"Weapon Chams"</span>);
+    feat.set(<span class="blue">"Weapon Chams"</span>, !on);   <span class="muted">// flip it</span>
+  });
+}, function cleanup() {
+  feat.set(<span class="blue">"Weapon Chams"</span>, false);
+});</code></pre></figure></div>
+            <div class="paper-sec"><h4><span class="sec-no">§4</span> Shortcuts for Common Cases</h4><p>When you do the same thing a lot, <code>kit</code> has a one-liner for it — convenience only, never extra power.</p>
+              <div class="cmd-group"><table class="cmd-table"><tbody>
+                <tr><td>kit.menuFeature(label, feature)</td><td>Make a checkbox already wired to a client feature.</td></tr>
+                <tr><td>kit.loadout({ ... })</td><td>Turn a whole set of features on/off in one call.</td></tr>
+                <tr><td>kit.off([labels])</td><td>Switch a list of features back off together — perfect for cleanup.</td></tr>
+              </tbody></table></div>
+            </div>
+          </div>
+        </div></article>
+
+        <article class="paper" data-article="rules"><div class="paper-card">
+          <div class="paper-head">
+            <div><p class="paper-kicker">Safety · The Boundary</p><h3>The Sandbox</h3><p class="paper-abstract">"Sandbox" is just a name for a safe, walled-off play area — like a child's sandbox, you can build anything you like inside it, but nothing you do leaks out into the rest of the computer. This article explains that boundary and why it is the reason you can run scripts at all.</p></div>
+          </div>
+          <div class="paper-body">
+            <div class="paper-sec"><h4><span class="sec-no">§1</span> What "Sandbox" Means</h4><p>Your script runs inside a sealed area. From inside it you can see and change the game freely — players, features, your aim, the screen. But you cannot reach <em>outside</em> the game to your files, the wider internet, or other programs. That invisible wall is the sandbox. The name comes from exactly that picture: a box you play in safely.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§2</span> The Role It Plays</h4><p>The sandbox is not there to annoy you — it is what makes JSUA safe to use at all. It does three jobs: it stops a downloaded script from harming your computer, it lets you trust scripts other people share, and it enforces your account tier so a script can never unlock features you do not own. Without it, running a stranger's script would be reckless. With it, the worst a bad script can do is not work.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§3</span> Inside the Box — What You Can Do</h4><p>There is plenty of room to build: ordinary JavaScript, timers and listeners, on-screen overlays you draw yourself, reading files from the <code>jsua</code> folder, everything in the other articles, and WebSocket connections to <code>voxiom.io</code> only. For nearly anything you will want to make, the box is big enough.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§4</span> The Walls — What Is Refused</h4><p>Before a script runs, the client scans it. If it finds a way to escape the box it refuses to load the script at all — nothing half-runs. The blocked moves are <code>require</code>, <code>fetch</code>, <code>XMLHttpRequest</code>, <code>eval</code>, <code>new Function</code>, web workers, and Electron bridges. If an AI ever hands you code with one of these, just ask it to redo the task using only the JSUA API.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§5</span> The Tools Are Already Inside</h4><p>So you do not reach out for libraries, JSUA hands you everything ready to use: <code>jsua</code>, <code>game</code>, <code>self</code>, <code>players</code>, <code>weapon</code>, <code>feat</code>, <code>calc</code>, <code>kit</code>, <code>bot</code>, <code>on</code>, and <code>off</code>. Use them freely — just never redeclare one with <code>let</code> or <code>const</code>, or you will hide the real thing. And one promise to keep in return: turn off every feature you turned on, and release every key you pressed, inside <code>cleanup</code>.</p></div>
+          </div>
+        </div></article>
+
+        <article class="paper" data-article="bots"><div class="paper-card">
+          <div class="paper-head">
+            <div><p class="paper-kicker">Bots · Deploy</p><h3>Deploying Bots</h3><p class="paper-abstract">The <code>bot</code> object connects extra players to your lobby as separate guests — not your account — and lets your script drive them: move, aim, shoot, switch weapons, respawn. Each bot is its own connection, so you can run several at once.</p></div>
+          </div>
+          <div class="paper-body">
+            <div class="paper-sec"><h4><span class="sec-no">§1</span> Connect and Keep the Handle</h4><p><code>bot.connect()</code> joins the lobby you are in and hands back a <strong>controller</strong>. Keep it in a variable and call everything on that variable — there are no ids to look up. Connect again for a second bot, a third, and so on. Bots are shared and keep running until stopped, so always end with <code>bot.disconnectAll()</code> in <code>cleanup</code>.</p>
+              <div class="cmd-group"><table class="cmd-table"><tbody>
+                <tr><td>const b = bot.connect()</td><td>Join the current lobby; returns this bot's controller.</td></tr>
+                <tr><td>bot.list()</td><td>Every live controller, as an array.</td></tr>
+                <tr><td>bot.count</td><td>How many bots are connected.</td></tr>
+                <tr><td>bot.disconnectAll()</td><td>Drop every bot. Put this in <code>cleanup</code>.</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="paper-sec"><h4><span class="sec-no">§2</span> Driving One</h4><p>Everything below is called on the handle you kept (here, <code>b</code>). Movement keys and an action can happen in the same moment — a bot can walk and shoot at once.</p>
+              <div class="cmd-group"><table class="cmd-table"><tbody>
+                <tr><td>b.press(key) / b.unpress(key)</td><td>Hold/release <code>"w" "a" "s" "d" "space" "shoot" "aim"</code>.</td></tr>
+                <tr><td>b.tap(key, ms)</td><td>Press, then release after <code>ms</code> (default 120).</td></tr>
+                <tr><td>b.yaw / b.pitch</td><td>Set view angles in radians (pitch up is positive, clamped to ±1.5).</td></tr>
+                <tr><td>b.lookAt(target, from?)</td><td>Aim at a player or point. Defaults to aiming from your position.</td></tr>
+                <tr><td>b.slot(n)</td><td>Switch to weapon slot 0–4.</td></tr>
+                <tr><td>b.shoot(on) / b.shootOnce()</td><td>Hold/release fire, or fire a single shot.</td></tr>
+                <tr><td>b.jump()</td><td>Jump once.</td></tr>
+                <tr><td>b.respawn()</td><td>Respawn the bot.</td></tr>
+                <tr><td>b.disconnect()</td><td>Drop just this bot.</td></tr>
+              </tbody></table></div>
+            </div>
+            <div class="paper-sec"><h4><span class="sec-no">§3</span> Three Bots at Once</h4><p>One shoots the nearest enemy, one stares up and spins, one strafes back and forth. Notice each bot is just a variable you drive.</p><figure class="listing"><figcaption>Connect three bots and give each its own behaviour</figcaption><pre><code><span class="gold">jsua.register</span>({ name: <span class="blue">"Three Bots"</span> }, function init() {
+  const shooter = bot.connect();
+  const spinner = bot.connect();
+  const swayer  = bot.connect();
+  shooter.slot(1);
+
+  <span class="muted">// 1 — look at closest enemy and fire</span>
+  kit.every(80, function () {
+    if (!kit.ready()) return;
+    const enemy = players.closestEnemy();
+    if (enemy) { shooter.lookAt(enemy); shooter.shoot(on); }
+    else shooter.shoot(off);
+  });
+
+  <span class="muted">// 2 — look up and spin</span>
+  spinner.pitch = 1.4;
+  kit.every(50, function () { spinner.yaw += 0.12; });
+
+  <span class="muted">// 3 — sway left and right</span>
+  let left = true;
+  swayer.press(<span class="blue">"a"</span>);
+  kit.every(600, function () {
+    swayer.unpress(left ? <span class="blue">"a"</span> : <span class="blue">"d"</span>);
+    swayer.press(left ? <span class="blue">"d"</span> : <span class="blue">"a"</span>);
+    left = !left;
+  });
+}, function cleanup() {
+  bot.disconnectAll();
+});</code></pre></figure></div>
+          </div>
+        </div></article>
+      </div></div>
+
+      <div class="reader-foot">
+        <p>Want an AI to write it? Hand it the full reference and ask for one small behavior.</p>
+        <a class="button button-primary" href="AI%20Reference.txt" download>AI Reference.txt <svg class="icon" aria-hidden="true"><use href="#download"></use></svg></a>
+      </div>
+    </div></section>
+  </main>
+  <footer class="site-footer"><div class="footer-shell"><div class="developer-credit"><span class="credit-label">Developed by</span><a class="developer-profile" href="https://discord.gg/H6282ZmGGk" target="_blank" rel="noreferrer" aria-label="Find lolua on Discord"><span class="profile-avatar" aria-hidden="true">LO</span><span class="profile-copy"><strong>lolua</strong><small>Find on Discord</small></span></a><span class="credit-join">&amp;</span><a class="developer-profile" href="https://discord.gg/H6282ZmGGk" target="_blank" rel="noreferrer" aria-label="Find codemeteor on Discord"><span class="profile-avatar alt" aria-hidden="true">CM</span><span class="profile-copy"><strong>codemeteor</strong><small>Find on Discord</small></span></a></div><div class="footer-links"><a href="/legal/privacy">Privacy</a><a href="/legal/terms">Terms</a><a href="https://discord.gg/H6282ZmGGk" target="_blank" rel="noreferrer">Discord</a></div>
+      <p class="footer-copyright">© 2026 Liquid Star. All rights reserved.</p></div></footer>
+  <script>
+    (function () {
+      var reader = document.getElementById('reader');
+      var spokes = Array.prototype.slice.call(document.querySelectorAll('.wheel-spoke'));
+      var wheel = document.getElementById('wheel');
+      var coreText = document.getElementById('wheel-core-text');
+      var readerTitle = document.getElementById('reader-title');
+      var readerHint = document.getElementById('reader-hint');
+      var papers = Array.prototype.slice.call(document.querySelectorAll('.paper'));
+      var typingHeadline = document.getElementById('typing-headline');
+      var typingHeadlineText = document.getElementById('typing-headline-text');
+
+      var titles = {
+        start:   'Welcome to <em>JSUA.</em>',
+        scripts: 'Anatomy of a <em>Script.</em>',
+        state:   'Reading the <em>Match.</em>',
+        build:   'Interacting with the <em>Client.</em>',
+        rules:   'The <em>Sandbox.</em>',
+        bots:    'Deploying <em>Bots.</em>'
+      };
+      var DEFAULT_TITLE = 'Read <em>here.</em>';
+      var DEFAULT_HINT = 'Tap a wedge to open its article';
+      var OPEN_HINT = 'Tap the centre to close · or another wedge to switch';
+
+      var isOpen = false;
+      var current = null;
+      var titleTimer = null;
+      var openedAt = 0;
+
+      function setTitle(html) {
+        if (!readerTitle) return;
+        if (titleTimer) clearTimeout(titleTimer);
+        readerTitle.classList.add('swap');
+        titleTimer = setTimeout(function () { readerTitle.innerHTML = html; readerTitle.classList.remove('swap'); }, 150);
+      }
+      function openSection(id) {
+        if (!titles[id]) return;
+        current = id;
+        papers.forEach(function (p) { p.classList.toggle('active', p.getAttribute('data-article') === id); });
+        isOpen = true;
+        openedAt = Date.now();
+        if (reader) reader.classList.add('open');
+        setTitle(titles[id]);
+        if (readerHint) readerHint.textContent = OPEN_HINT;
+        if (coreText) { coreText.textContent = 'CLOSE'; coreText.setAttribute('class', 'wheel-core-text back'); }
+      }
+      function closeSection() {
+        isOpen = false;
+        current = null;
+        if (reader) reader.classList.remove('open');
+        setTitle(DEFAULT_TITLE);
+        if (readerHint) readerHint.textContent = DEFAULT_HINT;
+        if (coreText) { coreText.textContent = ''; coreText.setAttribute('class', 'wheel-core-text'); }
+      }
+
+      // Desktop nicety: hovering back onto the wheel closes it.
+      if (wheel) wheel.addEventListener('mouseenter', function () { if (isOpen && Date.now() - openedAt > 680) closeSection(); });
+      // Touch + click: tapping the centre core closes the open article.
+      var core = wheel && wheel.querySelector('.wheel-core');
+      if (core) core.addEventListener('click', function (e) { if (isOpen) { e.stopPropagation(); closeSection(); } });
+
+      spokes.forEach(function (spoke) {
+        var id = spoke.getAttribute('data-tab');
+        spoke.addEventListener('mouseenter', function () { if (!isOpen) setTitle(titles[id]); });
+        spoke.addEventListener('mouseleave', function () { if (!isOpen) setTitle(DEFAULT_TITLE); });
+        function choose() {
+          spoke.classList.add('pulse');
+          setTimeout(function () { spoke.classList.remove('pulse'); }, 560);
+          if (isOpen && id === current) closeSection();   // tap the open wedge again → close
+          else openSection(id);                            // open it, or switch to it
+        }
+        spoke.addEventListener('click', choose);
+        spoke.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
+      });
+
+      var initialHash = (location.hash || '').replace('#', '');
+      if (titles[initialHash]) openSection(initialHash);
+      if (typingHeadline && typingHeadlineText && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        var headlineWords = ['Code anything.', 'Want more?'];
+        var headlineIndex = 0;
+        var headlineMode = 'hold';
+        var headlineShown = headlineWords[0].length;
+        var headlineHold = 520;
+        var headlineClock = performance.now();
+        var headlineLast = headlineClock;
+        var headlineStartedAt = headlineClock;
+        typingHeadline.style.setProperty('--cursor-x', typingHeadlineText.offsetWidth + 'px');
+        function headlineSpeed(now) {
+          var progress = Math.min((now - headlineStartedAt) / 10000, 1);
+          return 1 - (progress * 0.6);
+        }
+        function renderHeadline() {
+          var full = headlineWords[headlineIndex];
+          var nextText = full.slice(0, Math.max(0, Math.round(headlineShown)));
+          if (typingHeadlineText.textContent !== nextText) {
+            typingHeadlineText.textContent = nextText;
+            typingHeadline.style.setProperty('--cursor-x', typingHeadlineText.offsetWidth + 'px');
+          }
+        }
+        function tickHeadline(now) {
+          var elapsed = Math.min(now - headlineLast, 50);
+          headlineLast = now;
+          var speed = headlineSpeed(now);
+          var full = headlineWords[headlineIndex];
+          if (headlineMode === 'hold') {
+            headlineHold -= elapsed * speed;
+            if (headlineHold <= 0) headlineMode = 'delete';
+          } else if (headlineMode === 'delete') {
+            headlineShown -= elapsed * 0.038 * speed;
+            if (headlineShown <= 0) {
+              headlineShown = 0;
+              headlineIndex = (headlineIndex + 1) % headlineWords.length;
+              headlineMode = 'type';
+            }
+          } else {
+            headlineShown += elapsed * 0.024 * speed;
+            if (headlineShown >= full.length) {
+              headlineShown = full.length;
+              headlineHold = 520;
+              headlineMode = 'hold';
+            }
+          }
+          renderHeadline();
+          requestAnimationFrame(tickHeadline);
+        }
+        requestAnimationFrame(tickHeadline);
+      }
+    })();
+  </script>
+  <script>
+    (function () {
+      var codeEl = document.getElementById('hero-code');
+      if (!codeEl) return;
+
+      var segments = [];
+      function walk(node) {
+        if (node.nodeType === 3) {
+          if (node.nodeValue) segments.push({ c: null, t: node.nodeValue });
+        } else if (node.nodeType === 1) {
+          if (node.classList.contains('typing-cursor')) return;
+          if (node.classList.contains('line')) {
+            Array.prototype.forEach.call(node.childNodes, walk);
+            segments.push({ c: null, t: '\n' });
+          } else {
+            segments.push({ c: (node.className || '').trim() || null, t: node.textContent });
+          }
+        }
+      }
+      Array.prototype.forEach.call(codeEl.childNodes, walk);
+      if (segments.length && segments[segments.length - 1].t === '\n') segments.pop();
+
+      function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        var h = '';
+        segments.forEach(function (s) { h += s.c ? '<span class="' + s.c + '">' + esc(s.t) + '</span>' : esc(s.t); });
+        codeEl.innerHTML = h + '<span class="typing-cursor"></span>';
+        return;
+      }
+
+      var charData = [];
+      var html = '';
+      segments.forEach(function (seg) {
+        for (var i = 0; i < seg.t.length; i++) {
+          var ch = seg.t[i];
+          if (ch === '\n') {
+            html += '\n';
+          } else {
+            html += '<span class="flk' + (seg.c ? ' ' + seg.c : '') + '">' + esc(ch) + '</span>';
+            charData.push({
+              phase:    Math.random() * Math.PI * 2,
+              freq:     8 + Math.random() * 20,
+              stableAt: 2000 + Math.random() * 8000
+            });
+          }
+        }
+      });
+      codeEl.innerHTML = html + '<span class="typing-cursor"></span>';
+
+      var charEls = Array.prototype.slice.call(codeEl.querySelectorAll('.flk'));
+      var startTime = performance.now();
+
+      function tick(now) {
+        var elapsed = now - startTime;
+        var running = false;
+        charEls.forEach(function (el, i) {
+          var d = charData[i];
+          if (elapsed >= d.stableAt) {
+            el.style.opacity = '';
+          } else {
+            running = true;
+            var t         = elapsed / d.stableAt;
+            var amplitude = 1 - t;
+            var flicker   = Math.abs(Math.sin(d.freq * elapsed * 0.001 + d.phase));
+            el.style.opacity = Math.max(0.05, 1 - amplitude * flicker * 0.9);
+          }
+        });
+        if (running) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

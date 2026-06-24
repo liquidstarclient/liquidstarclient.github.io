@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "liquid-star",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-06-21",
+  "workers_dev": true,
+  "preview_urls": false,
+  "triggers": {
+    "crons": ["*/1 * * * *"]
+  },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "liquid-star-tickets",
+      "database_id": "60b7b59d-12af-4a60-a1f2-63cace88e08e"
+    }
+  ],
+  "vars": {
+    "DISCORD_TICKET_CHANNEL_ID": "1518174882901397504",
+    "CLOSED_TICKET_RETENTION_DAYS": "30",
+    "AUDIT_RETENTION_DAYS": "30",
+    "CORS_ORIGINS": "null,https://*.github.io"
+  }
+}
