@@ -4,6 +4,42 @@ JSUA ("JavaScript User Application") is Liquid Star's scripting layer. A script 
 
 Use only the API in this document. Scripts run in a sandbox: no Node, no Electron internals, no arbitrary network, no dynamic code generation. Anything outside that is rejected before the script runs.
 
+## STEP 0 — before anything, ask the user's access tier
+
+Before you read further or write a single line, ask the user exactly one thing:
+
+> **"Are you on Guest or Licensed access?"** (A few users are Developer — only treat them so if they say it.)
+
+Ask only this. Nothing else up front. It matters because the features you can switch on through `feat` depend on the user's tier: a Guest physically cannot enable Licensed-only features, and attempts silently do nothing. Once you know the tier, only build with what that tier can use, and if you're unsure whether a feature is in their tier, have them run `feat.list()` (it only ever lists what their account can actually touch) and work from that.
+
+## What you can and cannot do
+
+**You CAN:**
+- Read live game state — your position, aim, health, the player list, your weapon.
+- Turn the client's own features on/off — but only the ones the user's tier exposes.
+- Build menu controls (checkboxes, sliders, buttons) under the script.
+- Connect and control 3rd-person guest bots.
+- Manipulate your own rotation and movement, and what the server sees you doing (desync).
+- Run timers, draw your own on-screen overlays, and read files from the `jsua/` folder.
+
+**You CANNOT:**
+- Leave the sandbox — no network (except the `*.voxiom.io` sockets `bot` handles for you), no files outside `jsua/`, no `eval`/`new Function`/workers/Node/Electron.
+- Unlock features above the user's tier — `feat` simply does not expose them, so there is no path to them. Do not pretend otherwise.
+- Read another loaded script's private variables — every script runs in its own isolated scope.
+- See, extract, or reproduce the client's private source code.
+- Promise the user won't be warned, restricted, or banned — that is always their risk, not something a script controls.
+
+## Intricacies — read these or you'll trip
+
+- **Nothing exists before spawn.** All live values are `null`/empty on the menu screen. Guard match logic with `if (kit.ready()) { … }`.
+- **A feature only appears in `feat.list()` after its menu tab has been opened once this session.** A missing label means either it's above the user's tier, or that tab hasn't been opened yet — ask before assuming it's broken.
+- **Angles are radians.** `self.yaw` / `self.rotation.y` is horizontal, `self.pitch` / `self.rotation.x` is vertical (up is positive). All of them are settable. Bots use the same units (`b.yaw`, `b.pitch`).
+- **Menu controls must be created synchronously inside `init`** — never inside a timer or callback, or they won't attach.
+- **Bots are separate guest connections** (3rd person), join the user's exact lobby, and keep running until disconnected — always `bot.disconnectAll()` in `cleanup`.
+- **`self.fakeCamera()` is experimental** — it overrides the render camera and can fight the client's own viewangles/third-person.
+- **Clean up everything** you changed: features on → off, keys pressed → released, bots connected → disconnected, all in `cleanup()`.
+- **Never guess a name** — print it with `jsua.log`, `feat.list()`, or `Object.keys(...)` and write from what the console shows.
+
 ## For the AI writing this script — read first
 
 You are writing one self-contained JSUA `.js` file for a user. Rules:
@@ -68,9 +104,9 @@ Registers the script. Call it exactly once, at the top level of the file.
 | Access | What it gives you |
 | --- | --- |
 | `self.pos` | Your world position as `{x, y, z}` numbers. |
-| `self.yaw` | Horizontal facing angle, radians. |
-| `self.pitch` | Vertical facing angle, radians (up is positive). |
-| `self.rotation` | Your rotation object (yaw + pitch together). |
+| `self.yaw` | Horizontal facing angle, radians. **Settable** — assign to turn (`self.yaw = 1.2`). |
+| `self.pitch` | Vertical facing angle, radians (up is positive). **Settable**. |
+| `self.rotation` | Your live rotation object — set `self.rotation.x` (pitch) / `self.rotation.y` (yaw) directly. |
 | `self.health` | Your current health, a number. |
 | `self.team` | Your team number — compare with other players to tell friend from foe. |
 | `self.weapon` | The item you are currently holding. |
@@ -98,7 +134,7 @@ These let a script split your visual view, your server-reported angle, and your 
 | `self.clearServerRotation()` | Stop the server-rotation spoof. |
 | `self.compMovement(true / false)` | While a server rotation is set, rotate your WASD so you still **walk where you actually look** instead of toward the spoofed angle. |
 | `self.serverRotation` | Read the `{ yaw, pitch }` the server is currently being sent. |
-| `self.fakeCamera({ yaw, pitch })` | Visual only: point your **on-screen** view at an angle while the server keeps the real one. Pass `null` to stop. (Best-effort — it overrides the render camera; can fight the client's own viewangles/third-person if those are on.) |
+| `self.fakeCamera()` | **Creates** a mouse-driven fake view camera and returns a live `{ yaw, pitch, sens }`. Your mouse now moves this on-screen view; your real/server angle no longer follows the mouse, so you steer it yourself with `self.rotation` / `self.lookAt`. Call `self.fakeCamera(false)` to remove it. (Experimental — overrides the render camera; can fight the client's own viewangles/third-person if those are on.) |
 
 ```js
 jsua.register({ name: "Spin Desync" }, function init() {
@@ -296,4 +332,4 @@ Allowed: normal JavaScript, timers and listeners, DOM overlays, sandboxed `jsua/
 
 Paste this whole document into your AI assistant and say:
 
-"Using only the Liquid Star JSUA API in this document, write one JSUA script. It must call `jsua.register`, build any menu controls inside `init`, and in `cleanup` turn off every feature it changed, release every key it pressed, and disconnect every bot it connected. Do not use blocked sandbox APIs. Keep it to one clear behaviour. If you need a feature or value name that is not clearly listed here, do not guess — give me a small probe using `jsua.log`, `feat.list()`, or `Object.keys(...)` and ask me to paste the JSUA Console output back."
+"First, before writing anything, ask me whether I'm on Guest or Licensed access — and ask only that. Then, using only the Liquid Star JSUA API in this document, write one JSUA script that fits my tier. It must call `jsua.register`, build any menu controls inside `init`, and in `cleanup` turn off every feature it changed, release every key it pressed, and disconnect every bot it connected. Do not use blocked sandbox APIs. Keep it to one clear behaviour. If you need a feature or value name that is not clearly listed here, do not guess — give me a small probe using `jsua.log`, `feat.list()`, or `Object.keys(...)` and ask me to paste the JSUA Console output back."
