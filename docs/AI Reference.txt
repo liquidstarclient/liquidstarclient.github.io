@@ -33,7 +33,7 @@ Ask only this. Nothing else up front. It matters because the features you can sw
 
 - **Nothing exists before spawn.** All live values are `null`/empty on the menu screen. Guard match logic with `if (kit.ready()) { … }`.
 - **A feature only appears in `feat.list()` after its menu tab has been opened once this session.** A missing label means either it's above the user's tier, or that tab hasn't been opened yet — ask before assuming it's broken.
-- **Angles are radians.** `self.yaw` / `self.rotation.y` is horizontal, `self.pitch` / `self.rotation.x` is vertical (up is positive). All of them are settable. Bots use the same units (`b.yaw`, `b.pitch`).
+- **Angles are radians.** `self.yaw` / `self.rotation.y` is horizontal, `self.pitch` / `self.rotation.x` is vertical (up is positive). All of them are settable. Bots use the same units (`bot(id).yaw`, `bot(id).pitch`).
 - **Menu controls must be created synchronously inside `init`** — never inside a timer or callback, or they won't attach.
 - **Bots are separate guest connections** (3rd person), join the user's exact lobby, and keep running until disconnected — always `bot.disconnectAll()` in `cleanup`.
 - **`self.fakeCamera()` is experimental** — it overrides the render camera and can fight the client's own viewangles/third-person.
@@ -112,6 +112,8 @@ Registers the script. Call it exactly once, at the top level of the file.
 | `self.weapon` | The item you are currently holding. |
 | `self.raw` | The underlying player object, for `Object.keys()` discovery. |
 | `self.serverRotation` | Read-only `{ yaw, pitch }` the **server** currently sees — reflects any manipulation below. |
+| `self.ssp` | Read-only server-side position — where the **server** thinks you are (`game.player.serverPosition`), which lags your live `self.pos`. |
+| `self.ssld` | Read-only server-side look direction — the unit aim vector `{x, y, z}` the **server** currently sees (from your last outgoing input). |
 
 `self` also acts on you:
 
@@ -121,6 +123,7 @@ Registers the script. Call it exactly once, at the top level of the file.
 | `self.unpress(key)` | Releases a key you pressed. Always pair it with a press, including in `cleanup`. |
 | `self.lookAt(target)` | Smoothly rotates your view toward a player, a point `{x,y,z}`, or a 3D object. |
 | `self.lookAt(target, { from })` | Same, but aim as if your eye were at `from` instead of your real position. |
+| `self.lookAt(target, { predict })` | Lead a moving target — aim where it's heading. `predict` is `true` (default lead) or a tick count (e.g. `{ predict: 3 }`). |
 
 `key` is a name — `"w" "a" "s" "d" "space" "ctrl" "shift" "crouch" "jump"` — or a raw key code number like `68`.
 
@@ -173,6 +176,8 @@ jsua.register({ name: "Spin Desync" }, function init() {
 | `weapon.raw` | The raw current-item object, for discovery. |
 | `calc.lookYaw` / `calc.lookPitch` | Your current aim angles, ready to reuse. |
 | `calc.lookDir` | The direction you are looking as a unit vector `{x, y, z}`. |
+| `calc.predict(target, lead?)` | Predicted future position `{x, y, z}` of a moving player/point. `lead` is in 50 ms server ticks (default 3). Call it each frame — velocity is tracked for you. |
+| `calc.velocity(target)` | A target's current velocity as `{x, y, z}` units per second. |
 
 ## Driving client features — `feat`
 
@@ -251,16 +256,22 @@ jsua.register({ name: "One Button Loadout" }, function init() {
 
 `bot` connects and controls extra players ("bots") in your current lobby. Each bot is a **separate guest connection**, not your logged-in account, so you can run several at once. Bots are a shared resource and keep running until stopped — always `bot.disconnectAll()` in `cleanup`.
 
-`bot.connect()` joins the lobby you are in and **returns a controller handle**. Keep it in a variable and drive everything through that variable; there are no ids to look up.
+Every bot is addressed by a **custom id you choose**. Connect it under an id, then grab it any time with `bot(id)` — there are no numeric handles to track. `bot.connect("tank")` joins the lobby you are in (and returns that bot's controller); `bot("tank")` returns the same controller later.
 
 | Top-level call | What it does |
 | --- | --- |
-| `bot.connect(options?)` | Connects a bot, returns its controller. `options`: `{ slot, tickMs, url }` — all optional; `url` defaults to your current lobby, `slot` is the starting weapon slot. |
+| `bot.connect(id?, options?)` | Connects a bot under your `id` (any string/number) and returns its controller. `options`: `{ slot, tickMs, url }` — all optional; `url` defaults to your current lobby, `slot` is the starting weapon slot. Omit `id` and one is auto-assigned (`"bot1"`, `"bot2"`, …). |
+| `bot(id)` | The controller for the bot connected under `id` (re-grab it any time). If no such bot exists it warns and returns a safe no-op. |
+| `bot.has(id)` / `bot.get(id)` | Whether an id exists / its controller (or `null`). |
+| `bot.ids()` | An array of every connected bot id. |
 | `bot.list()` | An array of every live controller handle. |
 | `bot.count` | How many bots are connected. |
-| `bot.disconnectAll()` (alias `bot.disconnect()`) | Disconnects every bot. |
+| `bot.disconnect(id)` | Disconnects the one bot with that id. |
+| `bot.disconnectAll()` (alias `bot.disconnect()` with no id) | Disconnects every bot. |
 
-Everything else is on the handle returned by `bot.connect()`:
+**Drive every bot at once.** Use any controller member directly on `bot` *without* an id and it fans out to **all** connected bots: `bot.yaw = 0`, `bot.press("w")`, `bot.shoot(on)`, `bot.lookAt(target)`. With an id — `bot("tank").press("w")` — it targets just that one.
+
+Everything below is a member of a bot controller — call it as `bot(id).member` for one bot, or `bot.member` for all:
 
 | Handle member | What it does |
 | --- | --- |
@@ -269,7 +280,8 @@ Everything else is on the handle returned by `bot.connect()`:
 | `.tap(key, ms?)` | Presses a key, then releases it after `ms` (default 120). |
 | `.yaw` / `.pitch` | Get/set the bot's view angles in radians (pitch up is positive, clamped to ±1.5). |
 | `.rotation` | Get/set `{ yaw, pitch }` at once. `.setRotation(yaw, pitch)` does the same. |
-| `.lookAt(target, from?)` | Points the bot at a player/point/object. `from` (or `.origin`) is the eye to aim from; defaults to your own position. |
+| `.lookAt(target, from?)` | Points the bot at a player/point/object, aiming from the **bot's own body**. `from` (or `.origin`) overrides the point it aims from. |
+| `.locate()` | Force the bot to re-find its own body in the world (handy right after a respawn). Normally automatic. |
 | `.slot(n)` | Switches the bot to weapon slot 0–9. |
 | `.shoot(on)` | Holds (`true`) or releases (`false`) the bot's fire. |
 | `.shootOnce()` | Fires a single shot. |
@@ -281,20 +293,20 @@ Everything else is on the handle returned by `bot.connect()`:
 
 ```js
 jsua.register({ name: "Follow Bot" }, function init() {
-  const b = bot.connect();
-  b.slot(1);
+  bot.connect("buddy");
+  bot("buddy").slot(1);
   kit.every(80, function () {
     const enemy = players.closestEnemy();
-    if (enemy) { b.lookAt(enemy); b.shoot(on); }
-    else b.shoot(off);
-    b.press("w");
+    if (enemy) { bot("buddy").lookAt(enemy); bot("buddy").shoot(on); }
+    else bot("buddy").shoot(off);
+    bot("buddy").press("w");
   });
 }, function cleanup() {
   bot.disconnectAll();
 });
 ```
 
-Note: `.lookAt` aims from your position by default (great for clustering bots near you). For independent per-bot aim, give the bot an `.origin` or pass a `from` point.
+Note: `.lookAt` aims from the bot's own body (located automatically once it joins). To aim from somewhere else instead — e.g. your own position — set the bot's `.origin` or pass a `from` point.
 
 ## Utilities — `jsua.*`
 

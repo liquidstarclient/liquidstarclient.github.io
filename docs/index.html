@@ -228,8 +228,10 @@
                 <tr><td>self.team</td><td>Your team number (used to tell friend from foe).</td></tr>
                 <tr><td>self.press(key)</td><td>Hold a key down — name like <code>"d"</code>, <code>"space"</code>, <code>"ctrl"</code>, or a code like <code>68</code>.</td></tr>
                 <tr><td>self.unpress(key)</td><td>Release a key you pressed. Always pair it with a press.</td></tr>
-                <tr><td>self.lookAt(target)</td><td>Turn your view toward a player, a point, or an attached object.</td></tr>
+                <tr><td>self.lookAt(target)</td><td>Turn your view toward a player, a point, or an attached object. Pass <code>{ predict: 3 }</code> to lead a moving target.</td></tr>
                 <tr><td>self.serverRotation</td><td>The angle the <em>server</em> currently sees you facing, as <code>{yaw, pitch}</code>.</td></tr>
+                <tr><td>self.ssp</td><td>Read-only server-side position — where the <em>server</em> thinks you are (lags your live <code>self.pos</code>).</td></tr>
+                <tr><td>self.ssld</td><td>Read-only server-side look direction — the unit aim vector <code>{x, y, z}</code> the server currently sees.</td></tr>
                 <tr><td>self.setServerRotation(yaw, pitch)</td><td>Make the server see a fixed angle while your screen keeps your real aim (silent-aim-style). <code>null</code> stops it.</td></tr>
                 <tr><td>self.compMovement(on)</td><td>While a server rotation is set, keep walking where you actually look instead of toward the spoofed angle.</td></tr>
                 <tr><td>self.fakeCamera()</td><td>Creates a mouse-driven fake view (returns <code>{yaw, pitch, sens}</code>). Your mouse moves this view; steer your real/server angle with <code>self.rotation</code>. <code>false</code> removes it.</td></tr>
@@ -252,6 +254,8 @@
                 <tr><td>weapon.shotDelay</td><td>The gap between shots for this weapon.</td></tr>
                 <tr><td>calc.lookDir</td><td>The direction you are looking, as a unit <code>{x, y, z}</code>.</td></tr>
                 <tr><td>calc.lookYaw / calc.lookPitch</td><td>Your current aim angles, ready to use.</td></tr>
+                <tr><td>calc.predict(target, lead?)</td><td>Where a moving target is heading, as <code>{x, y, z}</code>. <code>lead</code> is in 50&nbsp;ms ticks (default 3); call it each frame.</td></tr>
+                <tr><td>calc.velocity(target)</td><td>A target's current velocity, as <code>{x, y, z}</code> units per second.</td></tr>
               </tbody></table></div>
             </div>
             <div class="paper-sec"><h4><span class="sec-no">§4</span> Helpers — <code>kit</code></h4><p>Small tools that make the rest easier. <code>kit.ready()</code> is the one you will use most — it tells you the match actually exists yet.</p>
@@ -328,51 +332,54 @@
             <div><p class="paper-kicker">Bots · Deploy</p><h3>Deploying Bots</h3><p class="paper-abstract">The <code>bot</code> object connects extra players to your lobby as separate guests — not your account — and lets your script drive them: move, aim, shoot, switch weapons, respawn. Each bot is its own connection, so you can run several at once.</p></div>
           </div>
           <div class="paper-body">
-            <div class="paper-sec"><h4><span class="sec-no">§1</span> Connect and Keep the Handle</h4><p><code>bot.connect()</code> joins the lobby you are in and hands back a <strong>controller</strong>. Keep it in a variable and call everything on that variable — there are no ids to look up. Connect again for a second bot, a third, and so on. Bots are shared and keep running until stopped, so always end with <code>bot.disconnectAll()</code> in <code>cleanup</code>.</p>
+            <div class="paper-sec"><h4><span class="sec-no">§1</span> Connect by Id</h4><p>Every bot gets a <strong>custom id you choose</strong>. Connect it under that id, then grab it any time with <code>bot(id)</code> — no variables to carry around, no numbers to look up. Connect more bots under more ids. Bots are shared and keep running until stopped, so always end with <code>bot.disconnectAll()</code> in <code>cleanup</code>.</p>
               <div class="cmd-group"><table class="cmd-table"><tbody>
-                <tr><td>const b = bot.connect()</td><td>Join the current lobby; returns this bot's controller.</td></tr>
-                <tr><td>bot.list()</td><td>Every live controller, as an array.</td></tr>
+                <tr><td>bot.connect("tank")</td><td>Join the lobby under id <code>"tank"</code>; returns its controller. Omit the id and one is auto-assigned.</td></tr>
+                <tr><td>bot("tank")</td><td>The controller for that bot, any time. Unknown id → a safe no-op that warns.</td></tr>
+                <tr><td>bot.ids() / bot.list()</td><td>Every connected id / every live controller.</td></tr>
                 <tr><td>bot.count</td><td>How many bots are connected.</td></tr>
+                <tr><td>bot.disconnect("tank")</td><td>Drop one bot by id.</td></tr>
                 <tr><td>bot.disconnectAll()</td><td>Drop every bot. Put this in <code>cleanup</code>.</td></tr>
               </tbody></table></div>
             </div>
-            <div class="paper-sec"><h4><span class="sec-no">§2</span> Driving One</h4><p>Everything below is called on the handle you kept (here, <code>b</code>). Movement keys and an action can happen in the same moment — a bot can walk and shoot at once.</p>
+            <div class="paper-sec"><h4><span class="sec-no">§2</span> Driving One — or All</h4><p>Call any member on <code>bot(id)</code> to drive that one bot, or on <code>bot</code> directly (no id) to fan it out to <strong>every</strong> connected bot at once — e.g. <code>bot.press("w")</code> walks them all. Movement keys and an action can happen in the same moment — a bot can walk and shoot at once.</p>
               <div class="cmd-group"><table class="cmd-table"><tbody>
-                <tr><td>b.press(key) / b.unpress(key)</td><td>Hold/release <code>"w" "a" "s" "d" "space" "shoot" "aim"</code>.</td></tr>
-                <tr><td>b.tap(key, ms)</td><td>Press, then release after <code>ms</code> (default 120).</td></tr>
-                <tr><td>b.yaw / b.pitch</td><td>Set view angles in radians (pitch up is positive, clamped to ±1.5).</td></tr>
-                <tr><td>b.lookAt(target, from?)</td><td>Aim at a player or point. Defaults to aiming from your position.</td></tr>
-                <tr><td>b.slot(n)</td><td>Switch to weapon slot 0–4.</td></tr>
-                <tr><td>b.shoot(on) / b.shootOnce()</td><td>Hold/release fire, or fire a single shot.</td></tr>
-                <tr><td>b.jump()</td><td>Jump once.</td></tr>
-                <tr><td>b.respawn()</td><td>Respawn the bot.</td></tr>
-                <tr><td>b.disconnect()</td><td>Drop just this bot.</td></tr>
+                <tr><td>bot(id).press(key) / .unpress(key)</td><td>Hold/release <code>"w" "a" "s" "d" "space" "shoot" "aim"</code>.</td></tr>
+                <tr><td>bot(id).tap(key, ms)</td><td>Press, then release after <code>ms</code> (default 120).</td></tr>
+                <tr><td>bot(id).yaw / .pitch / .rotation</td><td>Set view angles in radians (pitch up is positive, clamped to ±1.5).</td></tr>
+                <tr><td>bot(id).lookAt(target, from?)</td><td>Aim at a player or point, from the bot's own body. Pass <code>from</code> (or set <code>.origin</code>) to aim from elsewhere.</td></tr>
+                <tr><td>bot(id).locate()</td><td>Re-find the bot's body (handy after a respawn). Normally automatic.</td></tr>
+                <tr><td>bot(id).slot(n)</td><td>Switch to weapon slot 0–4.</td></tr>
+                <tr><td>bot(id).shoot(on) / .shootOnce()</td><td>Hold/release fire, or fire a single shot.</td></tr>
+                <tr><td>bot(id).jump()</td><td>Jump once.</td></tr>
+                <tr><td>bot(id).respawn()</td><td>Respawn the bot.</td></tr>
+                <tr><td>bot.yaw = 0 / bot.press("w")</td><td>No id → applies to every connected bot at once.</td></tr>
               </tbody></table></div>
             </div>
-            <div class="paper-sec"><h4><span class="sec-no">§3</span> Three Bots at Once</h4><p>One shoots the nearest enemy, one stares up and spins, one strafes back and forth. Notice each bot is just a variable you drive.</p><figure class="listing"><figcaption>Connect three bots and give each its own behaviour</figcaption><pre><code><span class="gold">jsua.register</span>({ name: <span class="blue">"Three Bots"</span> }, function init() {
-  const shooter = bot.connect();
-  const spinner = bot.connect();
-  const swayer  = bot.connect();
-  shooter.slot(1);
+            <div class="paper-sec"><h4><span class="sec-no">§3</span> Three Bots at Once</h4><p>One shoots the nearest enemy, one stares up and spins, one strafes back and forth. Each bot gets its own id, so you grab it with <code>bot(id)</code> wherever you need it — no variables to carry.</p><figure class="listing"><figcaption>Connect three bots and give each its own behaviour</figcaption><pre><code><span class="gold">jsua.register</span>({ name: <span class="blue">"Three Bots"</span> }, function init() {
+  <span class="gold">bot.connect</span>(<span class="blue">"shooter"</span>);
+  <span class="gold">bot.connect</span>(<span class="blue">"spinner"</span>);
+  <span class="gold">bot.connect</span>(<span class="blue">"swayer"</span>);
+  bot(<span class="blue">"shooter"</span>).slot(1);
 
   <span class="muted">// 1 — look at closest enemy and fire</span>
   kit.every(80, function () {
     if (!kit.ready()) return;
     const enemy = players.closestEnemy();
-    if (enemy) { shooter.lookAt(enemy); shooter.shoot(on); }
-    else shooter.shoot(off);
+    if (enemy) { bot(<span class="blue">"shooter"</span>).lookAt(enemy); bot(<span class="blue">"shooter"</span>).shoot(on); }
+    else bot(<span class="blue">"shooter"</span>).shoot(off);
   });
 
   <span class="muted">// 2 — look up and spin</span>
-  spinner.pitch = 1.4;
-  kit.every(50, function () { spinner.yaw += 0.12; });
+  bot(<span class="blue">"spinner"</span>).pitch = 1.4;
+  kit.every(50, function () { bot(<span class="blue">"spinner"</span>).yaw += 0.12; });
 
   <span class="muted">// 3 — sway left and right</span>
   let left = true;
-  swayer.press(<span class="blue">"a"</span>);
+  bot(<span class="blue">"swayer"</span>).press(<span class="blue">"a"</span>);
   kit.every(600, function () {
-    swayer.unpress(left ? <span class="blue">"a"</span> : <span class="blue">"d"</span>);
-    swayer.press(left ? <span class="blue">"d"</span> : <span class="blue">"a"</span>);
+    bot(<span class="blue">"swayer"</span>).unpress(left ? <span class="blue">"a"</span> : <span class="blue">"d"</span>);
+    bot(<span class="blue">"swayer"</span>).press(left ? <span class="blue">"d"</span> : <span class="blue">"a"</span>);
     left = !left;
   });
 }, function cleanup() {
