@@ -75,6 +75,7 @@ Registers the script. Call it exactly once, at the top level of the file.
 | `self.team` | Your team number — compare with other players to tell friend from foe. |
 | `self.weapon` | The item you are currently holding. |
 | `self.raw` | The underlying player object, for `Object.keys()` discovery. |
+| `self.serverRotation` | Read-only `{ yaw, pitch }` the **server** currently sees — reflects any manipulation below. |
 
 `self` also acts on you:
 
@@ -86,6 +87,32 @@ Registers the script. Call it exactly once, at the top level of the file.
 | `self.lookAt(target, { from })` | Same, but aim as if your eye were at `from` instead of your real position. |
 
 `key` is a name — `"w" "a" "s" "d" "space" "ctrl" "shift" "crouch" "jump"` — or a raw key code number like `68`.
+
+### Desync (advanced) — separate what you *see*, what the *server* sees, and where you *walk*
+
+These let a script split your visual view, your server-reported angle, and your movement direction apart — the building blocks behind viewangles and silent aim. Angles are radians.
+
+| Call | What it does |
+| --- | --- |
+| `self.setServerRotation(yaw, pitch)` | Make the **server** see a fixed angle while your screen keeps your real aim (a held, silent-aim-style spoof). Pass `null` to stop. |
+| `self.clearServerRotation()` | Stop the server-rotation spoof. |
+| `self.compMovement(true / false)` | While a server rotation is set, rotate your WASD so you still **walk where you actually look** instead of toward the spoofed angle. |
+| `self.serverRotation` | Read the `{ yaw, pitch }` the server is currently being sent. |
+| `self.fakeCamera({ yaw, pitch })` | Visual only: point your **on-screen** view at an angle while the server keeps the real one. Pass `null` to stop. (Best-effort — it overrides the render camera; can fight the client's own viewangles/third-person if those are on.) |
+
+```js
+jsua.register({ name: "Spin Desync" }, function init() {
+  let a = 0;
+  self.compMovement(true);                 // keep walking where I look
+  kit.every(50, function () {
+    a += 0.3;
+    self.setServerRotation(a, 0);           // server sees me spinning
+  });
+}, function cleanup() {
+  self.setServerRotation(null);             // always undo it
+  self.compMovement(false);
+});
+```
 
 ## Other players — `players` / `game.players`
 

@@ -229,6 +229,10 @@
                 <tr><td>self.press(key)</td><td>Hold a key down — name like <code>"d"</code>, <code>"space"</code>, <code>"ctrl"</code>, or a code like <code>68</code>.</td></tr>
                 <tr><td>self.unpress(key)</td><td>Release a key you pressed. Always pair it with a press.</td></tr>
                 <tr><td>self.lookAt(target)</td><td>Turn your view toward a player, a point, or an attached object.</td></tr>
+                <tr><td>self.serverRotation</td><td>The angle the <em>server</em> currently sees you facing, as <code>{yaw, pitch}</code>.</td></tr>
+                <tr><td>self.setServerRotation(yaw, pitch)</td><td>Make the server see a fixed angle while your screen keeps your real aim (silent-aim-style). <code>null</code> stops it.</td></tr>
+                <tr><td>self.compMovement(on)</td><td>While a server rotation is set, keep walking where you actually look instead of toward the spoofed angle.</td></tr>
+                <tr><td>self.fakeCamera({yaw, pitch})</td><td>Visual only: point your on-screen view somewhere while the server keeps the real angle. <code>null</code> stops it.</td></tr>
               </tbody></table></div>
             </div>
             <div class="paper-sec"><h4><span class="sec-no">§2</span> Everyone else — the <code>players</code> object</h4><p>Always the live list of other players. The filters save you from sorting by hand; the <code>closest…</code> calls hand back a single player.</p>

@@ -491,6 +491,8 @@ summary:focus-visible {
   line-height: .92;
 }
 
+.home-hero h1 { font-size: clamp(56.1px, 6.82vw, 93.5px); }
+
 .home-hero h1 span,
 .page-hero h1 span {
   background: linear-gradient(110deg, #f6e5bc 0%, #bd9550 48%, #f4d99d 78%);
@@ -1235,6 +1237,7 @@ summary:focus-visible {
   .page-hero h1,
   .download-hero h1,
   .legal-hero h1 { font-size: clamp(41px, 13vw, 58px); }
+  .home-hero h1 { font-size: clamp(45.1px, 14.3vw, 63.8px); }
   .hero-lead,
   .page-lead { font-size: 14px; }
   .hero-actions { flex-direction: column; }
