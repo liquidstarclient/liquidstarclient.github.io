@@ -1,4 +1,4 @@
-import { cp, mkdir, rm } from 'node:fs/promises';
+import { cp, mkdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,7 +11,13 @@ await mkdir(output, { recursive: true });
 await cp(path.join(root, 'index.html'), path.join(output, 'index.html'));
 
 for (const directory of directories) {
-  await cp(path.join(root, directory), path.join(output, directory), { recursive: true });
+  const source = path.join(root, directory);
+  try {
+    await stat(source);
+  } catch {
+    continue;
+  }
+  await cp(source, path.join(output, directory), { recursive: true });
 }
 
 console.log('Static website prepared in dist/');

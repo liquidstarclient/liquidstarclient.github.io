@@ -111,11 +111,18 @@
     .paper-sec em { color:var(--ink); font-style:italic; }
     .paper-sec code { font-family:var(--mono); font-size:14px; color:var(--ink); }
     /* the one extra element articles use: a plain code block */
-    .listing { margin:22px 0 6px; border:1px solid rgba(255,255,255,.09); border-radius:14px; overflow:hidden; background:rgba(4,4,4,.5); }
-    .listing figcaption { padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.07); color:var(--ink-faint); font-family:var(--mono); font-size:11px; letter-spacing:.06em; }
+    .listing { position:relative; margin:22px 0 6px; border:1px solid rgba(255,255,255,.09); border-radius:14px; overflow:hidden; background:rgba(4,4,4,.5); }
+    .listing figcaption { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.07); color:var(--ink-faint); font-family:var(--mono); font-size:11px; letter-spacing:.06em; }
     .listing pre { margin:0; padding:18px 20px; overflow:auto; }
     .listing code { display:block; padding:0; border:0; background:none; color:rgba(255,255,255,.84); font-family:var(--mono); font-size:13px; line-height:1.85; white-space:pre; }
     .listing .gold { color:#e4c36d; } .listing .blue { color:#88c2ff; } .listing .muted { color:rgba(255,255,255,.36); }
+    .copy-command { flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; min-height:25px; padding:5px 9px; border:1px solid rgba(228,195,109,.28); border-radius:999px; background:rgba(228,195,109,.08); color:#e4c36d; font-family:var(--mono); font-size:10px; line-height:1; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition:background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease; }
+    .copy-command:hover { border-color:rgba(228,195,109,.55); background:rgba(228,195,109,.14); transform:translateY(-1px); }
+    .copy-command:focus-visible { outline:2px solid rgba(228,195,109,.6); outline-offset:2px; }
+    .copy-command.copied { border-color:rgba(94,226,154,.55); background:rgba(94,226,154,.12); color:var(--green) !important; }
+    code.copy-inline { position:relative; border-bottom:1px dotted rgba(228,195,109,.35); cursor:pointer; transition:color .18s ease, border-color .18s ease, background .18s ease; }
+    code.copy-inline:hover, code.copy-inline:focus-visible { border-color:rgba(228,195,109,.75); background:rgba(228,195,109,.08); outline:none; }
+    code.copy-inline.copied { color:var(--green); border-color:rgba(94,226,154,.65); background:rgba(94,226,154,.08); }
     /* command reference table */
     .cmd-group { margin:24px 0 6px; }
     .cmd-group > h5 { margin:0 0 10px; color:var(--ink); font-size:13px; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; }
@@ -125,6 +132,7 @@
     .cmd-table tr:nth-child(even) { background:rgba(255,255,255,.018); }
     .cmd-table td { padding:11px 14px; vertical-align:top; font-size:14px; line-height:1.6; }
     .cmd-table td:first-child { width:42%; white-space:nowrap; color:#e4c36d; font-family:var(--mono); font-size:13px; }
+    .cmd-table td .copy-command { margin-left:10px; min-height:22px; padding:4px 7px; vertical-align:middle; font-size:9px; }
     .cmd-table td:last-child { color:var(--ink-soft); }
     @media (max-width:620px) { .cmd-table td:first-child { white-space:normal; width:44%; } .cmd-table td { font-size:13px; padding:9px 10px; } }
     .reader-foot { max-width:720px; margin:48px auto 0; display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between; padding:0; border:0; border-top:1px solid var(--line); padding-top:26px; background:none; }
@@ -221,14 +229,15 @@
           <div class="paper-body">
             <div class="paper-sec"><h4><span class="sec-no">§1</span> You — the <code>self</code> object</h4><p><code>self</code> is your own player. Some of these <em>read</em> a value; the bottom three <em>do</em> something.</p>
               <div class="cmd-group"><table class="cmd-table"><tbody>
-                <tr><td>self.pos</td><td>Your position right now, as <code>{x, y, z}</code>.</td></tr>
-                <tr><td>self.yaw</td><td>Which way you face left/right, in radians.</td></tr>
-                <tr><td>self.pitch</td><td>Which way you face up/down, in radians.</td></tr>
+                <tr><td>self.pos / self.position</td><td>Your body/world position right now, as <code>{x, y, z}</code>.</td></tr>
+                <tr><td>self.eye / self.aimPosition</td><td>Your aim/eye point. Use this when another bot should look at your head instead of your feet.</td></tr>
+                <tr><td>self.yaw</td><td>Which way you face left/right, in radians. Normalized to <code>-π..π</code>: <code>-π</code> ≈ 0°, <code>0</code> ≈ 180°, <code>π</code> ≈ 360°. Do not remap this like compass degrees.</td></tr>
+                <tr><td>self.pitch</td><td>Which way you face up/down, in radians. Normal range is <code>-π/2..π/2</code>.</td></tr>
                 <tr><td>self.health</td><td>Your current health.</td></tr>
                 <tr><td>self.team</td><td>Your team number (used to tell friend from foe).</td></tr>
                 <tr><td>self.press(key)</td><td>Hold a key down — name like <code>"d"</code>, <code>"space"</code>, <code>"ctrl"</code>, or a code like <code>68</code>.</td></tr>
                 <tr><td>self.unpress(key)</td><td>Release a key you pressed. Always pair it with a press.</td></tr>
-                <tr><td>self.lookAt(target)</td><td>Turn your view toward a player, a point, or an attached object. Pass <code>{ predict: 3 }</code> to lead a moving target.</td></tr>
+                <tr><td>self.lookAt(target)</td><td>Turn toward a player, point, or object. Player objects aim at head/eye; plain <code>{x,y,z}</code> points are literal. Pass <code>{ predict: 3 }</code> to lead movement.</td></tr>
                 <tr><td>self.serverRotation</td><td>The angle the <em>server</em> currently sees you facing, as <code>{yaw, pitch}</code>.</td></tr>
                 <tr><td>self.ssp</td><td>Read-only server-side position — where the <em>server</em> thinks you are (lags your live <code>self.pos</code>).</td></tr>
                 <tr><td>self.ssld</td><td>Read-only server-side look direction — the unit aim vector <code>{x, y, z}</code> the server currently sees.</td></tr>
@@ -323,7 +332,7 @@
             <div class="paper-sec"><h4><span class="sec-no">§2</span> The Role It Plays</h4><p>The sandbox is not there to annoy you — it is what makes JSUA safe to use at all. It does three jobs: it stops a downloaded script from harming your computer, it lets you trust scripts other people share, and it enforces your account tier so a script can never unlock features you do not own. Without it, running a stranger's script would be reckless. With it, the worst a bad script can do is not work.</p></div>
             <div class="paper-sec"><h4><span class="sec-no">§3</span> Inside the Box — What You Can Do</h4><p>There is plenty of room to build: ordinary JavaScript, timers and listeners, on-screen overlays you draw yourself, reading files from the <code>jsua</code> folder, everything in the other articles, and WebSocket connections to <code>voxiom.io</code> only. For nearly anything you will want to make, the box is big enough.</p></div>
             <div class="paper-sec"><h4><span class="sec-no">§4</span> The Walls — What Is Refused</h4><p>Before a script runs, the client scans it. If it finds a way to escape the box it refuses to load the script at all — nothing half-runs. The blocked moves are <code>require</code>, <code>fetch</code>, <code>XMLHttpRequest</code>, <code>eval</code>, <code>new Function</code>, web workers, and Electron bridges. If an AI ever hands you code with one of these, just ask it to redo the task using only the JSUA API.</p></div>
-            <div class="paper-sec"><h4><span class="sec-no">§5</span> The Tools Are Already Inside</h4><p>So you do not reach out for libraries, JSUA hands you everything ready to use: <code>jsua</code>, <code>game</code>, <code>self</code>, <code>players</code>, <code>weapon</code>, <code>feat</code>, <code>calc</code>, <code>kit</code>, <code>bot</code>, <code>on</code>, and <code>off</code>. Use them freely — just never redeclare one with <code>let</code> or <code>const</code>, or you will hide the real thing. And one promise to keep in return: turn off every feature you turned on, and release every key you pressed, inside <code>cleanup</code>.</p></div>
+            <div class="paper-sec"><h4><span class="sec-no">§5</span> The Tools Are Already Inside</h4><p>So you do not reach out for libraries, JSUA hands you everything ready to use: <code>jsua</code>, <code>game</code>, <code>self</code>, <code>players</code>, <code>weapon</code>, <code>feat</code>, <code>calc</code>, <code>kit</code>, <code>bot</code>, <code>on</code>, <code>off</code>, <code>stream</code>, and <code>step</code>. Use them freely — just never redeclare one with <code>let</code> or <code>const</code>, or you will hide the real thing. And one promise to keep in return: turn off every feature you turned on, and release every key you pressed, inside <code>cleanup</code>.</p></div>
           </div>
         </div></article>
 
@@ -346,9 +355,12 @@
               <div class="cmd-group"><table class="cmd-table"><tbody>
                 <tr><td>bot(id).press(key) / .unpress(key)</td><td>Hold/release <code>"w" "a" "s" "d" "space" "shoot" "aim"</code>.</td></tr>
                 <tr><td>bot(id).tap(key, ms)</td><td>Press, then release after <code>ms</code> (default 120).</td></tr>
-                <tr><td>bot(id).yaw / .pitch / .rotation</td><td>Set view angles in radians (pitch up is positive, clamped to ±1.5).</td></tr>
-                <tr><td>bot(id).lookAt(target, from?)</td><td>Aim at a player or point, from the bot's own body. Pass <code>from</code> (or set <code>.origin</code>) to aim from elsewhere.</td></tr>
+                <tr><td>bot(id).yaw / .pitch / .rotation</td><td>Set view angles in radians. Yaw is normalized to <code>-π..π</code> (<code>-π≈0°</code>, <code>0≈180°</code>, <code>π≈360°</code>); pitch clamps to <code>-π/2..π/2</code>. Use <code>lookAt</code> or normalized radians, not compass yaw.</td></tr>
+                <tr><td>bot(id).angles()</td><td>Debug current bot angles: logical <code>yaw/pitch</code> plus encoded <code>packetYaw/packetPitch</code> sent to the guest socket.</td></tr>
+                <tr><td>bot(id).lookAt(target, from?)</td><td>Aim from the bot's eye. Player targets use head/eye; plain points stay exact, except <code>self.pos</code>/<code>self.position</code> maps to your eye so bots do not stare at your feet.</td></tr>
                 <tr><td>bot(id).locate()</td><td>Re-find the bot's body (handy after a respawn). Normally automatic.</td></tr>
+                <tr><td>bot(id).rule(stream|step)</td><td><code>stream</code> sends normal continuous movement. <code>step</code> only sends when input changes, mimicking the old gravity-only/stepped behaviour.</td></tr>
+                <tr><td>bot(id).ruleMode</td><td>Read or assign the current packet rule: <code>stream</code> or <code>step</code>.</td></tr>
                 <tr><td>bot(id).slot(n)</td><td>Switch to weapon slot 0–4.</td></tr>
                 <tr><td>bot(id).shoot(on) / .shootOnce()</td><td>Hold/release fire, or fire a single shot.</td></tr>
                 <tr><td>bot(id).jump()</td><td>Jump once.</td></tr>
@@ -474,6 +486,72 @@
 
       var initialHash = (location.hash || '').replace('#', '');
       if (titles[initialHash]) openSection(initialHash);
+      function copyText(button, text) {
+        if (!button || !text) return;
+        function done(ok) {
+          var old = button.textContent;
+          button.textContent = ok ? 'Copied' : 'Failed';
+          button.classList.toggle('copied', ok);
+          window.setTimeout(function () { button.textContent = old; button.classList.remove('copied'); }, 1100);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+          return;
+        }
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        try { done(document.execCommand('copy')); } catch (_) { done(false); }
+        area.remove();
+      }
+      function copyButton(text, label) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'copy-command';
+        button.textContent = 'Copy';
+        button.setAttribute('aria-label', label || 'Copy command');
+        button.addEventListener('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          copyText(button, text);
+        });
+        return button;
+      }
+      document.querySelectorAll('.listing').forEach(function (listing) {
+        var code = listing.querySelector('code');
+        if (!code) return;
+        var caption = listing.querySelector('figcaption');
+        var button = copyButton(code.textContent.replace(/\n+$/, ''), 'Copy this JSUA example');
+        if (caption) caption.appendChild(button);
+        else listing.insertBefore(button, listing.firstChild);
+      });
+      document.querySelectorAll('.cmd-table td').forEach(function (cell) {
+        var item = cell.textContent.trim().replace(/\s+/g, ' ');
+        if (!item) return;
+        cell.appendChild(copyButton(item, 'Copy ' + item));
+      });
+      document.querySelectorAll('.paper code').forEach(function (code) {
+        if (code.closest('.listing')) return;
+        var text = code.textContent.trim();
+        if (!text) return;
+        code.classList.add('copy-inline');
+        code.setAttribute('role', 'button');
+        code.setAttribute('tabindex', '0');
+        code.setAttribute('title', 'Copy ' + text);
+        function copyInline(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          copyText(code, text);
+        }
+        code.addEventListener('click', copyInline);
+        code.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') copyInline(event);
+        });
+      });
       if (typingHeadline && typingHeadlineText && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         var headlineWords = ['Code anything.', 'Want more?'];
         var headlineIndex = 0;

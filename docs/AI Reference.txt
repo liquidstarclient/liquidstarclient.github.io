@@ -33,7 +33,7 @@ Ask only this. Nothing else up front. It matters because the features you can sw
 
 - **Nothing exists before spawn.** All live values are `null`/empty on the menu screen. Guard match logic with `if (kit.ready()) { … }`.
 - **A feature only appears in `feat.list()` after its menu tab has been opened once this session.** A missing label means either it's above the user's tier, or that tab hasn't been opened yet — ask before assuming it's broken.
-- **Angles are radians.** `self.yaw` / `self.rotation.y` is horizontal, `self.pitch` / `self.rotation.x` is vertical (up is positive). All of them are settable. Bots use the same units (`bot(id).yaw`, `bot(id).pitch`).
+- **Angles are radians with Voxiom's yaw offset.** `self.yaw` / `self.rotation.y` is horizontal, `self.pitch` / `self.rotation.x` is vertical (up is positive). Yaw is normalized to `-π..π`, but it is offset: `-π ≈ 0°`, `0 ≈ 180°`, `π ≈ 360°`. Do **not** convert it like normal compass yaw. Bots use the same units (`bot(id).yaw`, `bot(id).pitch`).
 - **Menu controls must be created synchronously inside `init`** — never inside a timer or callback, or they won't attach.
 - **Bots are separate guest connections** (3rd person), join the user's exact lobby, and keep running until disconnected — always `bot.disconnectAll()` in `cleanup`.
 - **`self.fakeCamera()` is experimental** — it overrides the render camera and can fight the client's own viewangles/third-person.
@@ -84,8 +84,8 @@ jsua.register(
 );
 ```
 
-Reserved injected names (already defined for you — never redeclare with `let`/`const`): `jsua`, `game`, `self`, `players`, `weapon`, `feat`, `calc`, `kit`, `bot`, `on`, `off`.
-`on` is `true`, `off` is `false` — readability sugar for feature toggles.
+Reserved injected names (already defined for you — never redeclare with `let`/`const`): `jsua`, `game`, `self`, `players`, `weapon`, `feat`, `calc`, `kit`, `bot`, `on`, `off`, `stream`, `step`.
+`on` is `true`, `off` is `false`; `stream` and `step` are bot packet-rule constants.
 
 ## Lifecycle — `jsua.register(metadata, init, cleanup)`
 
@@ -103,9 +103,10 @@ Registers the script. Call it exactly once, at the top level of the file.
 
 | Access | What it gives you |
 | --- | --- |
-| `self.pos` | Your world position as `{x, y, z}` numbers. |
-| `self.yaw` | Horizontal facing angle, radians. **Settable** — assign to turn (`self.yaw = 1.2`). |
-| `self.pitch` | Vertical facing angle, radians (up is positive). **Settable**. |
+| `self.pos` / `self.position` | Your body/world position as `{x, y, z}` numbers. |
+| `self.eye` / `self.aimPosition` | Your aim/eye point. Use this when another bot should look at your head instead of your feet. |
+| `self.yaw` | Horizontal facing angle, radians. Normalized to `-π..π`: `-π` ≈ 0°, `0` ≈ 180°, `π` ≈ 360°. **Settable** — assign to turn (`self.yaw = 1.2`). Do not remap this like compass degrees. |
+| `self.pitch` | Vertical facing angle, radians (up is positive). Normal range is `-π/2..π/2`. **Settable**. |
 | `self.rotation` | Your live rotation object — set `self.rotation.x` (pitch) / `self.rotation.y` (yaw) directly. |
 | `self.health` | Your current health, a number. |
 | `self.team` | Your team number — compare with other players to tell friend from foe. |
@@ -121,9 +122,12 @@ Registers the script. Call it exactly once, at the top level of the file.
 | --- | --- |
 | `self.press(key)` | Holds a movement key down (keeps holding until released). |
 | `self.unpress(key)` | Releases a key you pressed. Always pair it with a press, including in `cleanup`. |
-| `self.lookAt(target)` | Smoothly rotates your view toward a player, a point `{x,y,z}`, or a 3D object. |
+| `self.lookAt(target)` | Smoothly rotates your view toward a player, a point `{x,y,z}`, or a 3D object. Player objects aim at head/eye; plain points are literal. |
 | `self.lookAt(target, { from })` | Same, but aim as if your eye were at `from` instead of your real position. |
 | `self.lookAt(target, { predict })` | Lead a moving target — aim where it's heading. `predict` is `true` (default lead) or a tick count (e.g. `{ predict: 3 }`). |
+
+LookAt rule: pass a player object when you mean "aim at that player"; pass a point when you mean "aim at this exact coordinate." `self.pos`/`self.position` is a body point, but bot lookAt treats that specific local body point as `self.eye` so bots do not aim at your feet.
+Angle rule for AI/code generators: yaw is not `0 = north` and not `0 = 0°`. Liquid Star/Voxiom uses `-π ≈ 0°`, `0 ≈ 180°`, `π ≈ 360°`. Keep yaw normalized with wraparound into `-π..π`; never "fix" it by shifting `0` back to 0°. Pitch uses the same radians idea but only from `-π/2` to `π/2`.
 
 `key` is a name — `"w" "a" "s" "d" "space" "ctrl" "shift" "crouch" "jump"` — or a raw key code number like `68`.
 
@@ -278,10 +282,13 @@ Everything below is a member of a bot controller — call it as `bot(id).member`
 | `.connected` | Read-only `true` while this bot's connection is live. |
 | `.press(key)` / `.unpress(key)` | Holds/releases `"w" "a" "s" "d" "space"/"jump" "shoot"/"fire" "aim"`. Movement and an action can be active at the same time. |
 | `.tap(key, ms?)` | Presses a key, then releases it after `ms` (default 120). |
-| `.yaw` / `.pitch` | Get/set the bot's view angles in radians (pitch up is positive, clamped to ±1.5). |
+| `.yaw` / `.pitch` | Get/set the bot's view angles in radians. Yaw is normalized to `-π..π` with the same offset (`-π≈0°`, `0≈180°`, `π≈360°`); pitch is clamped to `-π/2..π/2`. Use `.lookAt(...)` or normalized radians, not compass yaw. |
 | `.rotation` | Get/set `{ yaw, pitch }` at once. `.setRotation(yaw, pitch)` does the same. |
-| `.lookAt(target, from?)` | Points the bot at a player/point/object, aiming from the **bot's own body**. `from` (or `.origin`) overrides the point it aims from. |
+| `.angles()` | Debug helper returning `{ yaw, pitch, packetYaw, packetPitch }`. `yaw/pitch` are JSUA logical angles; `packetYaw/packetPitch` are what the guest socket receives. |
+| `.lookAt(target, from?)` | Points the bot at a player/point/object/function, aiming from the **bot's eye**. Player targets use head/eye; plain points stay exact, except `self.pos`/`self.position` maps to `self.eye`. If the target resolves to the bot itself, it skips to another nearby player. `from` (or `.origin`) overrides the point it aims from. |
 | `.locate()` | Force the bot to re-find its own body in the world (handy right after a respawn). Normally automatic. |
+| `.rule(mode)` | Sets packet behaviour. `stream` (default) sends continuous movement; `step` only sends when input changes, mimicking the old gravity-only/stepped behaviour. Called with no argument, returns the current mode. |
+| `.ruleMode` | Get/set the current packet rule (`stream` or `step`). |
 | `.slot(n)` | Switches the bot to weapon slot 0–9. |
 | `.shoot(on)` | Holds (`true`) or releases (`false`) the bot's fire. |
 | `.shootOnce()` | Fires a single shot. |
@@ -306,7 +313,7 @@ jsua.register({ name: "Follow Bot" }, function init() {
 });
 ```
 
-Note: `.lookAt` aims from the bot's own body (located automatically once it joins). To aim from somewhere else instead — e.g. your own position — set the bot's `.origin` or pass a `from` point.
+Note: `.lookAt` aims from the bot's own eye (located automatically once it joins). To aim from somewhere else instead — e.g. your own position — set the bot's `.origin` or pass a `from` point. If you want the old stepped packet style on purpose, call `bot(id).rule(step)`.
 
 ## Utilities — `jsua.*`
 
