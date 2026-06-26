@@ -356,7 +356,7 @@
                 <tr><td>bot(id).press(key) / .unpress(key)</td><td>Hold/release <code>"w" "a" "s" "d" "space" "shoot" "aim"</code>.</td></tr>
                 <tr><td>bot(id).tap(key, ms)</td><td>Press, then release after <code>ms</code> (default 120).</td></tr>
                 <tr><td>bot(id).yaw / .pitch / .rotation</td><td>Set view angles in radians. Yaw is normalized to <code>-π..π</code> (<code>-π≈0°</code>, <code>0≈180°</code>, <code>π≈360°</code>); pitch clamps to <code>-π/2..π/2</code>. Use <code>lookAt</code> or normalized radians, not compass yaw.</td></tr>
-                <tr><td>bot(id).angles()</td><td>Debug current bot angles: logical <code>yaw/pitch</code> plus encoded <code>packetYaw/packetPitch</code> sent to the guest socket.</td></tr>
+                <tr><td>bot(id).angles()</td><td>Debug current bot angles: logical <code>yaw/pitch</code>, encoded <code>packetYaw/packetPitch</code>, and <code>lastAim</code> origin/target/delta.</td></tr>
                 <tr><td>bot(id).lookAt(target, from?)</td><td>Aim from the bot's eye. Player targets use head/eye; plain points stay exact, except <code>self.pos</code>/<code>self.position</code> maps to your eye so bots do not stare at your feet.</td></tr>
                 <tr><td>bot(id).locate()</td><td>Re-find the bot's body (handy after a respawn). Normally automatic.</td></tr>
                 <tr><td>bot(id).rule(stream|step)</td><td><code>stream</code> sends normal continuous movement. <code>step</code> only sends when input changes, mimicking the old gravity-only/stepped behaviour.</td></tr>

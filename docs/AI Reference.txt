@@ -284,7 +284,7 @@ Everything below is a member of a bot controller — call it as `bot(id).member`
 | `.tap(key, ms?)` | Presses a key, then releases it after `ms` (default 120). |
 | `.yaw` / `.pitch` | Get/set the bot's view angles in radians. Yaw is normalized to `-π..π` with the same offset (`-π≈0°`, `0≈180°`, `π≈360°`); pitch is clamped to `-π/2..π/2`. Use `.lookAt(...)` or normalized radians, not compass yaw. |
 | `.rotation` | Get/set `{ yaw, pitch }` at once. `.setRotation(yaw, pitch)` does the same. |
-| `.angles()` | Debug helper returning `{ yaw, pitch, packetYaw, packetPitch }`. `yaw/pitch` are JSUA logical angles; `packetYaw/packetPitch` are what the guest socket receives. |
+| `.angles()` | Debug helper returning `{ yaw, pitch, packetYaw, packetPitch, lastAim }`. `yaw/pitch` are JSUA logical angles; `packetYaw/packetPitch` are what the guest socket receives; `lastAim` shows origin/target/delta from the last `.lookAt`. |
 | `.lookAt(target, from?)` | Points the bot at a player/point/object/function, aiming from the **bot's eye**. Player targets use head/eye; plain points stay exact, except `self.pos`/`self.position` maps to `self.eye`. If the target resolves to the bot itself, it skips to another nearby player. `from` (or `.origin`) overrides the point it aims from. |
 | `.locate()` | Force the bot to re-find its own body in the world (handy right after a respawn). Normally automatic. |
 | `.rule(mode)` | Sets packet behaviour. `stream` (default) sends continuous movement; `step` only sends when input changes, mimicking the old gravity-only/stepped behaviour. Called with no argument, returns the current mode. |
