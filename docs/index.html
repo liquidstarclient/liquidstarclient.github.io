@@ -66,6 +66,29 @@
     .reader.open .wheel-wrap { transform:scale(.44); margin:-118px 0 -158px; }
     .wheel { width:min(540px,90vw); height:auto; display:block; overflow:visible; cursor:pointer; outline:none; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
     .reader-stage { -webkit-user-select:none; user-select:none; }
+    .paper,
+    .paper * {
+      -webkit-user-select:text;
+      user-select:text;
+    }
+    .paper ::selection,
+    .paper-card ::selection,
+    .listing ::selection,
+    .cmd-table ::selection,
+    .paper code::selection {
+      background:rgba(228,195,109,.36);
+      color:#fff7d6;
+      text-shadow:none;
+    }
+    .paper ::-moz-selection,
+    .paper-card ::-moz-selection,
+    .listing ::-moz-selection,
+    .cmd-table ::-moz-selection,
+    .paper code::-moz-selection {
+      background:rgba(228,195,109,.42);
+      color:#fff7d6;
+      text-shadow:none;
+    }
     .wheel-halo { fill:none; stroke:rgba(var(--gold-rgb),0); stroke-width:2.5; transition:stroke .4s ease; }
     .wheel.is-hot .wheel-halo, .reader.open .wheel-halo { stroke:rgba(var(--gold-rgb),.2); }
     .wheel-spoke { cursor:pointer; outline:none; }
@@ -116,13 +139,7 @@
     .listing pre { margin:0; padding:18px 20px; overflow:auto; }
     .listing code { display:block; padding:0; border:0; background:none; color:rgba(255,255,255,.84); font-family:var(--mono); font-size:13px; line-height:1.85; white-space:pre; }
     .listing .gold { color:#e4c36d; } .listing .blue { color:#88c2ff; } .listing .muted { color:rgba(255,255,255,.36); }
-    .copy-command { flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; min-height:25px; padding:5px 9px; border:1px solid rgba(228,195,109,.28); border-radius:999px; background:rgba(228,195,109,.08); color:#e4c36d; font-family:var(--mono); font-size:10px; line-height:1; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition:background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease; }
-    .copy-command:hover { border-color:rgba(228,195,109,.55); background:rgba(228,195,109,.14); transform:translateY(-1px); }
-    .copy-command:focus-visible { outline:2px solid rgba(228,195,109,.6); outline-offset:2px; }
-    .copy-command.copied { border-color:rgba(94,226,154,.55); background:rgba(94,226,154,.12); color:var(--green) !important; }
-    code.copy-inline { position:relative; border-bottom:1px dotted rgba(228,195,109,.35); cursor:pointer; transition:color .18s ease, border-color .18s ease, background .18s ease; }
-    code.copy-inline:hover, code.copy-inline:focus-visible { border-color:rgba(228,195,109,.75); background:rgba(228,195,109,.08); outline:none; }
-    code.copy-inline.copied { color:var(--green); border-color:rgba(94,226,154,.65); background:rgba(94,226,154,.08); }
+    .paper code { cursor:text; }
     /* command reference table */
     .cmd-group { margin:24px 0 6px; }
     .cmd-group > h5 { margin:0 0 10px; color:var(--ink); font-size:13px; font-family:var(--mono); letter-spacing:.04em; text-transform:uppercase; }
@@ -132,7 +149,6 @@
     .cmd-table tr:nth-child(even) { background:rgba(255,255,255,.018); }
     .cmd-table td { padding:11px 14px; vertical-align:top; font-size:14px; line-height:1.6; }
     .cmd-table td:first-child { width:42%; white-space:nowrap; color:#e4c36d; font-family:var(--mono); font-size:13px; }
-    .cmd-table td .copy-command { margin-left:10px; min-height:22px; padding:4px 7px; vertical-align:middle; font-size:9px; }
     .cmd-table td:last-child { color:var(--ink-soft); }
     @media (max-width:620px) { .cmd-table td:first-child { white-space:normal; width:44%; } .cmd-table td { font-size:13px; padding:9px 10px; } }
     .reader-foot { max-width:720px; margin:48px auto 0; display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between; padding:0; border:0; border-top:1px solid var(--line); padding-top:26px; background:none; }
@@ -486,72 +502,6 @@
 
       var initialHash = (location.hash || '').replace('#', '');
       if (titles[initialHash]) openSection(initialHash);
-      function copyText(button, text) {
-        if (!button || !text) return;
-        function done(ok) {
-          var old = button.textContent;
-          button.textContent = ok ? 'Copied' : 'Failed';
-          button.classList.toggle('copied', ok);
-          window.setTimeout(function () { button.textContent = old; button.classList.remove('copied'); }, 1100);
-        }
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
-          return;
-        }
-        var area = document.createElement('textarea');
-        area.value = text;
-        area.setAttribute('readonly', '');
-        area.style.position = 'fixed';
-        area.style.opacity = '0';
-        document.body.appendChild(area);
-        area.select();
-        try { done(document.execCommand('copy')); } catch (_) { done(false); }
-        area.remove();
-      }
-      function copyButton(text, label) {
-        var button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'copy-command';
-        button.textContent = 'Copy';
-        button.setAttribute('aria-label', label || 'Copy command');
-        button.addEventListener('click', function (event) {
-          event.preventDefault();
-          event.stopPropagation();
-          copyText(button, text);
-        });
-        return button;
-      }
-      document.querySelectorAll('.listing').forEach(function (listing) {
-        var code = listing.querySelector('code');
-        if (!code) return;
-        var caption = listing.querySelector('figcaption');
-        var button = copyButton(code.textContent.replace(/\n+$/, ''), 'Copy this JSUA example');
-        if (caption) caption.appendChild(button);
-        else listing.insertBefore(button, listing.firstChild);
-      });
-      document.querySelectorAll('.cmd-table td').forEach(function (cell) {
-        var item = cell.textContent.trim().replace(/\s+/g, ' ');
-        if (!item) return;
-        cell.appendChild(copyButton(item, 'Copy ' + item));
-      });
-      document.querySelectorAll('.paper code').forEach(function (code) {
-        if (code.closest('.listing')) return;
-        var text = code.textContent.trim();
-        if (!text) return;
-        code.classList.add('copy-inline');
-        code.setAttribute('role', 'button');
-        code.setAttribute('tabindex', '0');
-        code.setAttribute('title', 'Copy ' + text);
-        function copyInline(event) {
-          event.preventDefault();
-          event.stopPropagation();
-          copyText(code, text);
-        }
-        code.addEventListener('click', copyInline);
-        code.addEventListener('keydown', function (event) {
-          if (event.key === 'Enter' || event.key === ' ') copyInline(event);
-        });
-      });
       if (typingHeadline && typingHeadlineText && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         var headlineWords = ['Code anything.', 'Want more?'];
         var headlineIndex = 0;
