@@ -110,7 +110,7 @@
           <button class="faq-question" type="button" aria-expanded="false"><span>Infinite Loading?</span><i aria-hidden="true"></i></button>
           <div class="answer">
             <div>
-              <p>If Liquid Star gets stuck on infinite loading, open Settings and switch <b>Load source</b> from <b>Cloud</b> to <b>Local</b>.</p>
+              <p>If Liquid Star gets stuck on infinite loading, open Settings and set <b>Load source</b> to <b>Local</b>.</p>
               <div class="launcher-stage">
                 <div class="ls-launcher" data-ls-launcher aria-label="Interactive preview of the Liquid Star launcher">
                   <div class="ls-topbar">
@@ -180,8 +180,8 @@
                       <div class="ls-settings-head"><button class="ls-back" type="button" data-ls-back aria-label="Back to launcher">&lsaquo;</button><strong>Settings</strong></div>
                       <p>Configure how Liquid Star opens.</p>
                       <div class="ls-setting">
-                        <span><b>Load source</b><small>Use local loading without cloud.</small></span>
-                        <span class="ls-segment" data-ls-segment><button class="is-active" type="button">Local</button><button class="ls-pulse-cloud" type="button" data-ls-cloud-btn>Cloud</button></span>
+                        <span><b>Load source</b><small>Use Local loading if startup gets stuck.</small></span>
+                        <span class="ls-segment" data-ls-segment><button class="is-active ls-pulse-local" type="button" data-ls-local-btn>Local</button></span>
                       </div>
                       <div class="ls-setting">
                         <span><b>Auto-join on link detection</b><small>Connect when a server link is copied.</small></span>
@@ -203,7 +203,7 @@
 
                     <section class="ls-panel ls-launch-panel" data-ls-panel="launch" aria-hidden="true">
                       <strong>Launching Liquid Star</strong>
-                      <p class="ls-launch-status" style="margin-top: 4px; font-size: 11px; color: rgba(255,255,255,.5);">Connecting to cloud...</p>
+                      <p class="ls-launch-status" style="margin-top: 4px; font-size: 11px; color: rgba(255,255,255,.5);">Loading locally...</p>
                       <div class="ls-progress-container" style="width: 100%; height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; margin-top: 10px;">
                         <div class="ls-progress-bar" style="width: 0%; height: 100%; background: var(--gold); border-radius: 3px; transition: width 150ms ease;"></div>
                       </div>

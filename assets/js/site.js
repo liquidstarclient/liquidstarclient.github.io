@@ -284,7 +284,7 @@ document.querySelectorAll('[data-ls-launcher]').forEach((launcher) => {
 
   const playBtn = launcher.querySelector('[data-ls-play-btn]');
   const settingsBtn = launcher.querySelector('[data-ls-settings]');
-  const cloudBtn = launcher.querySelector('[data-ls-cloud-btn]');
+  const localBtn = launcher.querySelector('[data-ls-local-btn]');
   const pointerEl = launcher.querySelector('.ls-guide-pointer');
 
   const startSimulation = () => {
@@ -294,7 +294,7 @@ document.querySelectorAll('[data-ls-launcher]').forEach((launcher) => {
     if (!progressBar || !progressStatus) return;
     
     progressBar.style.width = '0%';
-    progressStatus.textContent = 'Syncing cloud assets...';
+    progressStatus.textContent = 'Loading local assets...';
     progressStatus.style.color = 'rgba(255,255,255,.5)';
     
     let progress = 0;
@@ -347,9 +347,9 @@ document.querySelectorAll('[data-ls-launcher]').forEach((launcher) => {
       }
     }
     
-    if (cloudBtn) {
-      cloudBtn.classList.add('ls-pulse-cloud');
-      const segment = cloudBtn.closest('[data-ls-segment]');
+    if (localBtn) {
+      localBtn.classList.add('ls-pulse-local');
+      const segment = localBtn.closest('[data-ls-segment]');
       if (segment) {
         segment.querySelectorAll('button').forEach((btn) => {
           btn.classList.toggle('is-active', btn.textContent.trim() === 'Local');
@@ -361,7 +361,7 @@ document.querySelectorAll('[data-ls-launcher]').forEach((launcher) => {
     const progressStatus = launcher.querySelector('.ls-launch-status');
     if (progressBar) progressBar.style.width = '0%';
     if (progressStatus) {
-      progressStatus.textContent = 'Connecting to cloud...';
+      progressStatus.textContent = 'Loading locally...';
       progressStatus.style.color = 'rgba(255,255,255,.5)';
     }
 
@@ -428,8 +428,8 @@ document.querySelectorAll('[data-ls-launcher]').forEach((launcher) => {
   settingsBtn?.addEventListener('click', () => {
     showPanel('settings');
     settingsBtn.classList.remove('ls-pulse-settings');
-    if (pointerEl && cloudBtn) {
-      cloudBtn.appendChild(pointerEl);
+    if (pointerEl && localBtn) {
+      localBtn.appendChild(pointerEl);
       pointerEl.style.display = 'block';
     }
   });
@@ -437,9 +437,8 @@ document.querySelectorAll('[data-ls-launcher]').forEach((launcher) => {
   launcher.querySelector('[data-ls-back]')?.addEventListener('click', () => showPanel(currentTab));
 
   playBtn?.addEventListener('click', () => {
-    const isCloudSelected = cloudBtn?.classList.contains('is-active') || 
-                           (cloudBtn?.closest('[data-ls-segment]')?.querySelector('button:last-child')?.classList.contains('is-active'));
-    if (isCloudSelected) {
+    const isLocalSelected = localBtn?.classList.contains('is-active');
+    if (isLocalSelected) {
       playBtn.classList.remove('ls-pulse-play');
       if (pointerEl) pointerEl.style.display = 'none';
       startSimulation();
@@ -458,8 +457,8 @@ document.querySelectorAll('[data-ls-launcher]').forEach((launcher) => {
     segment.querySelectorAll('button').forEach((button) => {
       button.addEventListener('click', () => {
         segment.querySelectorAll('button').forEach((option) => option.classList.toggle('is-active', option === button));
-        if (button.textContent.trim() === 'Cloud') {
-          button.classList.remove('ls-pulse-cloud');
+        if (button.textContent.trim() === 'Local') {
+          button.classList.remove('ls-pulse-local');
           setTimeout(() => {
             showPanel('home');
             if (playBtn) {

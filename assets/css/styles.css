@@ -1064,7 +1064,7 @@ summary:focus-visible {
   }
 }
 .ls-pulse-settings { animation: ls-pulse-btn-inset 1.8s infinite ease-in-out; }
-.ls-pulse-cloud { animation: ls-pulse-btn-inset 1.8s infinite ease-in-out; }
+.ls-pulse-local { animation: ls-pulse-btn-inset 1.8s infinite ease-in-out; }
 .ls-pulse-play { animation: ls-pulse-btn-inset 1.8s infinite ease-in-out; }
 .ls-launcher { --ls-tab-index: 0; width: min(340px,100%); overflow: hidden; border-radius: 10px; background: rgba(18,18,20,.58); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.35), 0 24px 65px rgba(0,0,0,.28); color: #f2f2f2; font-family: -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Helvetica,Arial,sans-serif; opacity: 0; transform: translateY(10px) scale(.96); filter: blur(6px); transition: opacity 420ms ease 80ms, transform 520ms var(--ease) 80ms, filter 420ms ease 80ms; user-select: none; }
 .launcher-faq.is-open .ls-launcher { opacity: 1; transform: none; filter: none; }
